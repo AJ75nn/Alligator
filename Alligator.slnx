@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AlligatorCore/AlligatorCore.csproj" />
+  <Project Path="AlligatorGh/AlligatorGh.csproj" />
+  <Project Path="AlligatorRh/AlligatorRh.csproj" />
+</Solution>
