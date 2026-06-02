@@ -285,21 +285,24 @@ namespace AlligatorRh
 
             if (isThrough)
             {
-                GetPoint gpThrough = new GetPoint();
-                gpThrough.SetCommandPrompt("Specify through point");
-
-                gpThrough.DynamicDraw += (sender, e) =>
+                while (true)
                 {
-                    try
+                    GetPoint gpThrough = new GetPoint();
+                    gpThrough.SetCommandPrompt("Specify through point");
+
+                    gpThrough.DynamicDraw += (sender, e) =>
                     {
-                        Line xline = XLineEngine.CreateXLine(e.CurrentPoint, refLine.Direction);
-                        e.Display.DrawLine(xline, layerColor);
-                    }
-                    catch(ArgumentException) {}
-                };
+                        try
+                        {
+                            Line xline = XLineEngine.CreateXLine(e.CurrentPoint, refLine.Direction);
+                            e.Display.DrawLine(xline, layerColor);
+                        }
+                        catch(ArgumentException) {}
+                    };
 
-                if (gpThrough.Get() == GetResult.Point)
-                {
+                    var resThrough = gpThrough.Get();
+                    if (resThrough == GetResult.Cancel || resThrough != GetResult.Point) break;
+
                     try
                     {
                         Line xline = XLineEngine.CreateXLine(gpThrough.Point(), refLine.Direction);

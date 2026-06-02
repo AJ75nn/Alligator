@@ -9,9 +9,10 @@ namespace AlligatorCore
     public static class XLineEngine
     {
         // Arbitrary large scale factor to simulate "infinity" in Rhino space.
-        // We use an extremely large number close to Rhino's maximum extents.
-        // Rhino generally uses double precision. 1e15 is right at the boundary of safe integer precision for doubles (2^53 ~ 9e15).
-        private const double InfinityScale = 1e15;
+        // We use a large number safely within Rhino's display/bounding box limits.
+        // 1e15 breaks Rhino's bounding box pipeline causing the doc.Objects.AddLine to silently drop the object.
+        // 1e9 allows the object to render and behave correctly as visually "infinite".
+        private const double InfinityScale = 1e9;
 
         /// <summary>
         /// Creates an XLine (infinite line) extending infinitely in both directions from the base point.
