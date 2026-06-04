@@ -15,6 +15,7 @@ namespace AlligatorGh
         private Button _btnDown;
         private Button _btnSave;
         private Button _btnCancel;
+        private Button _btnReset;
 
         public PluginManagerForm()
         {
@@ -100,8 +101,14 @@ namespace AlligatorGh
             _btnCancel.AutoSize = true;
             _btnCancel.Click += (s, e) => this.Close();
 
+            _btnReset = new Button();
+            _btnReset.Text = "Reset to Default";
+            _btnReset.AutoSize = true;
+            _btnReset.Click += BtnReset_Click;
+
             bottomLayout.Controls.Add(_btnSave);
             bottomLayout.Controls.Add(_btnCancel);
+            bottomLayout.Controls.Add(_btnReset);
 
             mainLayout.Controls.Add(bottomLayout, 0, 2);
 
@@ -141,18 +148,18 @@ namespace AlligatorGh
                 }
                 else
                 {
-                    // If no setting exists, preserve the tab's absolute order from Grasshopper's native CompleteRibbonLayout
+                    // If no setting exists, preserve the tab's absolute layout order (based on _originalTabs populated at startup)
                     items.Add(new PluginTabSettings
                     {
                         Name = tab.NameFull,
                         Visible = true, // default visible
-                        Order = savedSettings.Count == 0 ? initialOrder : int.MaxValue // if no settings exist at all, use native base order, otherwise put new tabs at end
+                        Order = savedSettings.Count == 0 ? initialOrder : int.MaxValue // if no settings exist at all, use native layout order, otherwise put new tabs at end
                     });
                 }
                 initialOrder++;
             }
 
-            // Sort by order, then by their base native order if they have int.MaxValue order
+            // Sort by order, then by their native layout order if they have int.MaxValue order
             items = items.OrderBy(x => x.Order).ThenBy(x => allTabs.FindIndex(t => t.NameFull == x.Name)).ToList();
 
             foreach (var item in items)
@@ -212,6 +219,17 @@ namespace AlligatorGh
             PluginManagerSettings.SaveSettings(newSettings);
             PluginManager.ApplyLayout();
             this.Close();
+        }
+
+        private void BtnReset_Click(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show("Are you sure you want to reset the ribbon tabs to their native Grasshopper order?", "Reset Ribbon", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.Yes)
+            {
+                PluginManagerSettings.SaveSettings(new List<PluginTabSettings>());
+                PluginManager.ApplyLayout();
+                this.Close();
+            }
         }
     }
 }
