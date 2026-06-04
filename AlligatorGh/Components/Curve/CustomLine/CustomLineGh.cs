@@ -1,13 +1,14 @@
 using System;
+using AlligatorCore;
+using AlligatorCore.Curve;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
-using AlligatorCore;
 
-namespace AlligatorGh
+namespace AlligatorGh.Components.Curve.CustomLine
 {
-    public class InfiniteLineComponent : GH_Component
+    public class CustomLineGh : GH_Component
     {
-        public InfiniteLineComponent()
+        public CustomLineGh()
           : base("InfiniteLine", "XLine",
               "Creates an infinite line from a base point and direction.",
               "Alligator", "Geometry")
@@ -42,7 +43,7 @@ namespace AlligatorGh
             try
             {
                 // Rely on the Core engine for generating the XLine or Ray
-                Curve xLine = XLineEngine.CreateXLine(basePoint, direction, length, bothSides);
+                Rhino.Geometry.Curve xLine = XLineEngine.CreateXLine(basePoint, direction, length, bothSides);
                 DA.SetData(0, xLine);
             }
             catch (ArgumentException ex)

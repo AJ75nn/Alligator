@@ -1,8 +1,7 @@
-using System;
 using Rhino;
 using Rhino.Geometry;
 
-namespace AlligatorCore
+namespace AlligatorCore.Curve
 {
     /// <summary>
     /// Stateless engine responsible for generating XLines and Rays based on dynamic lengths.
@@ -19,7 +18,7 @@ namespace AlligatorCore
         /// <param name="length">The distance to extend the line.</param>
         /// <param name="bothSides">If true, extends in both directions (XLine). If false, extends only forward (Ray).</param>
         /// <returns>A Curve geometry.</returns>
-        public static Curve CreateXLine(Point3d basePoint, Vector3d direction, double length, bool bothSides)
+        public static Rhino.Geometry.Curve CreateXLine(Point3d basePoint, Vector3d direction, double length, bool bothSides)
         {
             if (!basePoint.IsValid)
                 throw new ArgumentException("Base point is invalid.", nameof(basePoint));
@@ -55,7 +54,7 @@ namespace AlligatorCore
         /// <param name="length">The distance to extend the line.</param>
         /// <param name="bothSides">If true, extends in both directions (XLine). If false, extends only forward (Ray).</param>
         /// <returns>A Curve geometry.</returns>
-        public static Curve CreateXLine(Point3d p1, Point3d p2, double length, bool bothSides)
+        public static Rhino.Geometry.Curve CreateXLine(Point3d p1, Point3d p2, double length, bool bothSides)
         {
             if (!p1.IsValid)
                 throw new ArgumentException("First point is invalid.", nameof(p1));
@@ -88,7 +87,7 @@ namespace AlligatorCore
         /// <summary>
         /// Creates a horizontal XLine through a point.
         /// </summary>
-        public static Curve CreateHorizontalXLine(Point3d point, double length, bool bothSides)
+        public static Rhino.Geometry.Curve CreateHorizontalXLine(Point3d point, double length, bool bothSides)
         {
             return CreateXLine(point, Vector3d.XAxis, length, bothSides);
         }
@@ -96,7 +95,7 @@ namespace AlligatorCore
         /// <summary>
         /// Creates a vertical XLine through a point.
         /// </summary>
-        public static Curve CreateVerticalXLine(Point3d point, double length, bool bothSides)
+        public static Rhino.Geometry.Curve CreateVerticalXLine(Point3d point, double length, bool bothSides)
         {
             return CreateXLine(point, Vector3d.YAxis, length, bothSides);
         }
@@ -104,7 +103,7 @@ namespace AlligatorCore
         /// <summary>
         /// Creates an XLine at a specific angle from the World X-axis.
         /// </summary>
-        public static Curve CreateAngledXLine(Point3d point, double radians, double length, bool bothSides)
+        public static Rhino.Geometry.Curve CreateAngledXLine(Point3d point, double radians, double length, bool bothSides)
         {
             Vector3d direction = new Vector3d(Math.Cos(radians), Math.Sin(radians), 0);
             return CreateXLine(point, direction, length, bothSides);
@@ -113,7 +112,7 @@ namespace AlligatorCore
         /// <summary>
         /// Creates an XLine that bisects the angle defined by three points (vertex, start, end).
         /// </summary>
-        public static Curve CreateBisectingXLine(Point3d vertex, Point3d p1, Point3d p2, double length, bool bothSides)
+        public static Rhino.Geometry.Curve CreateBisectingXLine(Point3d vertex, Point3d p1, Point3d p2, double length, bool bothSides)
         {
             Vector3d v1 = p1 - vertex;
             Vector3d v2 = p2 - vertex;
@@ -137,7 +136,7 @@ namespace AlligatorCore
         /// <summary>
         /// Creates an XLine offset from an existing curve by a given distance.
         /// </summary>
-        public static Curve CreateOffsetXLine(Curve referenceCurve, double distance, Point3d sidePoint, double length, bool bothSides)
+        public static Rhino.Geometry.Curve CreateOffsetXLine(Rhino.Geometry.Curve referenceCurve, double distance, Point3d sidePoint, double length, bool bothSides)
         {
             if (referenceCurve == null || !referenceCurve.IsLinear(RhinoMath.ZeroTolerance))
                 throw new ArgumentException("Reference curve is not linear.");

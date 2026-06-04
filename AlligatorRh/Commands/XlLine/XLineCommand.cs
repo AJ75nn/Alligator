@@ -1,12 +1,13 @@
+using System;
+using AlligatorCore;
+using AlligatorCore.Curve;
 using Rhino;
 using Rhino.Commands;
 using Rhino.Geometry;
 using Rhino.Input;
 using Rhino.Input.Custom;
-using System;
-using AlligatorCore;
 
-namespace AlligatorRh
+namespace AlligatorRh.Commands.XlLine
 {
     public class XLineCommand : Command
     {

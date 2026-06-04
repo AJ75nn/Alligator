@@ -1,13 +1,12 @@
 using System;
 using System.Drawing;
 using Grasshopper;
-using Grasshopper.GUI;
 using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel;
 
-namespace AlligatorGh
+namespace AlligatorGh.Components.UI
 {
-    public class CanvasSettingsComponent : GH_Component
+    public class CanvasSettingsGh : GH_Component
     {
         // Static backup of original canvas settings
         private static bool _originalSaved = false;
@@ -20,7 +19,7 @@ namespace AlligatorGh
         private static Color _origWireSelectedB;
         private static Color _origWireEmpty;
 
-        public CanvasSettingsComponent()
+        public CanvasSettingsGh()
           : base("CanvasSettings", "CanvasSet",
               "Customizes Grasshopper's canvas appearance.",
               "Alligator", "Canvas")
