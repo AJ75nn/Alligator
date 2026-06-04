@@ -30,6 +30,7 @@ namespace AlligatorGh
             this.FormBorderStyle = FormBorderStyle.SizableToolWindow;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.AutoScaleMode = AutoScaleMode.Dpi;
 
             var mainLayout = new TableLayoutPanel();
             mainLayout.Dock = DockStyle.Fill;
@@ -140,20 +141,18 @@ namespace AlligatorGh
                 }
                 else
                 {
-                    // If no setting exists, preserve the tab's current order in the ribbon
-                    // rather than sticking it at the end alphabetically
-                    int indexInRibbon = ribbon.Tabs.FindIndex(t => t.NameFull == tab.NameFull);
+                    // If no setting exists, preserve the tab's absolute order from Grasshopper's native CompleteRibbonLayout
                     items.Add(new PluginTabSettings
                     {
                         Name = tab.NameFull,
                         Visible = true, // default visible
-                        Order = savedSettings.Count == 0 ? initialOrder : int.MaxValue // if no settings exist at all, use current loaded order, otherwise put new tabs at end
+                        Order = savedSettings.Count == 0 ? initialOrder : int.MaxValue // if no settings exist at all, use native base order, otherwise put new tabs at end
                     });
                 }
                 initialOrder++;
             }
 
-            // Sort by order, then by their current order in the ribbon if they have int.MaxValue order
+            // Sort by order, then by their base native order if they have int.MaxValue order
             items = items.OrderBy(x => x.Order).ThenBy(x => allTabs.FindIndex(t => t.NameFull == x.Name)).ToList();
 
             foreach (var item in items)

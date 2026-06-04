@@ -16,6 +16,33 @@ namespace AlligatorGh
         public static List<GH_RibbonTab> GetAllTabs()
         {
             InitializeBackup();
+
+            // To provide the absolute baseline "native" order, we check ComponentServer's CompleteRibbonLayout
+            // which represents Grasshopper's built-in unsorted default arrangement.
+            var layout = Instances.ComponentServer.CompleteRibbonLayout;
+            if (layout != null && layout.Tabs != null)
+            {
+                var sortedTabs = new List<GH_RibbonTab>();
+                foreach (var layoutTab in layout.Tabs)
+                {
+                    // layoutTab is GH_LayoutTab, which has property Name
+                    // _originalTabs are GH_RibbonTab, which has property NameFull
+                    var matchingTab = _originalTabs.FirstOrDefault(t => t.NameFull == layoutTab.Name);
+                    if (matchingTab != null && !sortedTabs.Contains(matchingTab))
+                    {
+                        sortedTabs.Add(matchingTab);
+                    }
+                }
+
+                // Add any leftovers not caught by CompleteRibbonLayout (just in case)
+                foreach (var tab in _originalTabs)
+                {
+                    if (!sortedTabs.Contains(tab))
+                        sortedTabs.Add(tab);
+                }
+                return sortedTabs;
+            }
+
             return _originalTabs.ToList();
         }
 
@@ -97,6 +124,17 @@ namespace AlligatorGh
 
             // Add them back to the ribbon
             ribbonTabs.AddRange(sortedTabsToApply);
+
+            // Calling PopulateRibbon replaces the ribbon tabs with defaults, destroying our custom order.
+            // Instead, we just need to re-layout the ribbon to fix any gaps left by removed/reordered tabs.
+            // Grasshopper Ribbon dynamically recalculates rects when LayoutRibbon is called.
+
+            // Re-call layout mechanism internally
+            var mLayout = typeof(GH_Ribbon).GetMethod("LayoutRibbon", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (mLayout != null)
+            {
+                mLayout.Invoke(ribbon, null);
+            }
 
             // Trigger a UI refresh
             ribbon.PerformLayout();
