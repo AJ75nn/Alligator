@@ -16,27 +16,33 @@ namespace AlligatorGh
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddPointParameter("Base Point", "P", "Origin point for the infinite line", GH_ParamAccess.item);
-            pManager.AddVectorParameter("Direction", "D", "Direction vector for the infinite line", GH_ParamAccess.item);
+            pManager.AddPointParameter("Base Point", "P", "Origin point for the line", GH_ParamAccess.item);
+            pManager.AddVectorParameter("Direction", "D", "Direction vector for the line", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Length", "L", "The length to extend the line", GH_ParamAccess.item, 1000.0);
+            pManager.AddBooleanParameter("Both Sides", "B", "If true, acts as an XLine extending both ways. If false, acts as a Ray.", GH_ParamAccess.item, true);
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddCurveParameter("Infinite Line", "L", "Generated infinite line", GH_ParamAccess.item);
+            pManager.AddCurveParameter("Line", "L", "Generated line (XLine or Ray)", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             Point3d basePoint = Point3d.Unset;
             Vector3d direction = Vector3d.Unset;
+            double length = 1000.0;
+            bool bothSides = true;
 
             if (!DA.GetData(0, ref basePoint)) return;
             if (!DA.GetData(1, ref direction)) return;
+            DA.GetData(2, ref length);
+            DA.GetData(3, ref bothSides);
 
             try
             {
-                // Rely on the Core engine for generating the XLine
-                Curve xLine = XLineEngine.CreateXLine(basePoint, direction);
+                // Rely on the Core engine for generating the XLine or Ray
+                Curve xLine = XLineEngine.CreateXLine(basePoint, direction, length, bothSides);
                 DA.SetData(0, xLine);
             }
             catch (ArgumentException ex)

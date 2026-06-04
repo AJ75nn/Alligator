@@ -63,6 +63,19 @@ namespace AlligatorRh
             return Result.Success;
         }
 
+        private double GetFrustumLength(RhinoDoc doc)
+        {
+            if (doc.Views.ActiveView != null && doc.Views.ActiveView.ActiveViewport != null)
+            {
+                var bbox = doc.Views.ActiveView.ActiveViewport.GetFrustumBoundingBox();
+                if (bbox.IsValid)
+                {
+                    return bbox.Diagonal.Length * 1000.0;
+                }
+            }
+            return 1e9; // Fallback
+        }
+
         private Result RunDirectionalMode(RhinoDoc doc, Vector3d direction, System.Drawing.Color layerColor)
         {
             while (true)
@@ -74,7 +87,8 @@ namespace AlligatorRh
                 {
                     try
                     {
-                        Curve xline = XLineEngine.CreateXLine(e.CurrentPoint, direction);
+                        double dynamicLength = GetFrustumLength(doc);
+                        Curve xline = XLineEngine.CreateXLine(e.CurrentPoint, direction, dynamicLength, true);
                         e.Display.DrawCurve(xline, layerColor);
                     }
                     catch (ArgumentException) {}
@@ -87,7 +101,8 @@ namespace AlligatorRh
 
                 try
                 {
-                    Curve xline = XLineEngine.CreateXLine(gp.Point(), direction);
+                    double dynamicLength = GetFrustumLength(doc);
+                    Curve xline = XLineEngine.CreateXLine(gp.Point(), direction, dynamicLength, true);
                     doc.Objects.AddCurve(xline);
                     doc.Views.Redraw();
                 }
@@ -111,7 +126,8 @@ namespace AlligatorRh
                 {
                     try
                     {
-                        Curve xline = XLineEngine.CreateXLine(basePoint, e.CurrentPoint);
+                        double dynamicLength = GetFrustumLength(doc);
+                        Curve xline = XLineEngine.CreateXLine(basePoint, e.CurrentPoint, dynamicLength, true);
                         e.Display.DrawCurve(xline, layerColor);
                     }
                     catch (ArgumentException) {}
@@ -124,7 +140,8 @@ namespace AlligatorRh
 
                 try
                 {
-                    Curve xline = XLineEngine.CreateXLine(basePoint, gpThrough.Point());
+                    double dynamicLength = GetFrustumLength(doc);
+                    Curve xline = XLineEngine.CreateXLine(basePoint, gpThrough.Point(), dynamicLength, true);
                     doc.Objects.AddCurve(xline);
                     doc.Views.Redraw();
                 }
@@ -214,7 +231,8 @@ namespace AlligatorRh
                 {
                     try
                     {
-                        Curve xline = XLineEngine.CreateBisectingXLine(vertex, p1, e.CurrentPoint);
+                        double dynamicLength = GetFrustumLength(doc);
+                        Curve xline = XLineEngine.CreateBisectingXLine(vertex, p1, e.CurrentPoint, dynamicLength, true);
                         e.Display.DrawCurve(xline, layerColor);
                     }
                     catch (ArgumentException) {}
@@ -225,7 +243,8 @@ namespace AlligatorRh
 
                 try
                 {
-                    Curve xline = XLineEngine.CreateBisectingXLine(vertex, p1, gpEnd.Point());
+                    double dynamicLength = GetFrustumLength(doc);
+                    Curve xline = XLineEngine.CreateBisectingXLine(vertex, p1, gpEnd.Point(), dynamicLength, true);
                     doc.Objects.AddCurve(xline);
                     doc.Views.Redraw();
                 }
@@ -296,7 +315,8 @@ namespace AlligatorRh
                     {
                         try
                         {
-                            Curve xline = XLineEngine.CreateXLine(e.CurrentPoint, refDirection);
+                            double dynamicLength = GetFrustumLength(doc);
+                            Curve xline = XLineEngine.CreateXLine(e.CurrentPoint, refDirection, dynamicLength, true);
                             e.Display.DrawCurve(xline, layerColor);
                         }
                         catch(ArgumentException) {}
@@ -307,7 +327,8 @@ namespace AlligatorRh
 
                     try
                     {
-                        Curve xline = XLineEngine.CreateXLine(gpThrough.Point(), refDirection);
+                        double dynamicLength = GetFrustumLength(doc);
+                        Curve xline = XLineEngine.CreateXLine(gpThrough.Point(), refDirection, dynamicLength, true);
                         doc.Objects.AddCurve(xline);
                         doc.Views.Redraw();
                     }
@@ -328,7 +349,8 @@ namespace AlligatorRh
                     {
                         try
                         {
-                            Curve xline = XLineEngine.CreateOffsetXLine(crv, distance, e.CurrentPoint);
+                            double dynamicLength = GetFrustumLength(doc);
+                            Curve xline = XLineEngine.CreateOffsetXLine(crv, distance, e.CurrentPoint, dynamicLength, true);
                             e.Display.DrawCurve(xline, layerColor);
                         }
                         catch(ArgumentException) {}
@@ -339,7 +361,8 @@ namespace AlligatorRh
 
                     try
                     {
-                        Curve xline = XLineEngine.CreateOffsetXLine(crv, distance, gpSide.Point());
+                        double dynamicLength = GetFrustumLength(doc);
+                        Curve xline = XLineEngine.CreateOffsetXLine(crv, distance, gpSide.Point(), dynamicLength, true);
                         doc.Objects.AddCurve(xline);
                         doc.Views.Redraw();
                     }
