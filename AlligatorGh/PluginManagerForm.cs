@@ -25,52 +25,86 @@ namespace AlligatorGh
         private void InitializeComponent()
         {
             this.Text = "Alligator Plugin Manager";
-            this.Size = new Size(350, 450);
+            this.Size = new Size(400, 500);
             this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.FormBorderStyle = FormBorderStyle.SizableToolWindow;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
 
+            var mainLayout = new TableLayoutPanel();
+            mainLayout.Dock = DockStyle.Fill;
+            mainLayout.RowCount = 3;
+            mainLayout.ColumnCount = 1;
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            mainLayout.Padding = new Padding(10);
+
             var lblInfo = new Label();
             lblInfo.Text = "Manage Grasshopper Ribbon Tabs (Plugins):\nCheck to show, uncheck to hide. Use buttons to reorder.";
-            lblInfo.Location = new Point(10, 10);
-            lblInfo.Size = new Size(310, 40);
+            lblInfo.AutoSize = true;
+            lblInfo.Margin = new Padding(0, 0, 0, 10);
+            mainLayout.Controls.Add(lblInfo, 0, 0);
+
+            var listLayout = new TableLayoutPanel();
+            listLayout.Dock = DockStyle.Fill;
+            listLayout.RowCount = 1;
+            listLayout.ColumnCount = 2;
+            listLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            listLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            listLayout.Margin = new Padding(0);
 
             _checkedListBox = new CheckedListBox();
-            _checkedListBox.Location = new Point(10, 55);
-            _checkedListBox.Size = new Size(240, 300);
+            _checkedListBox.Dock = DockStyle.Fill;
             _checkedListBox.CheckOnClick = true;
+            _checkedListBox.IntegralHeight = false;
+            listLayout.Controls.Add(_checkedListBox, 0, 0);
+
+            var btnLayout = new FlowLayoutPanel();
+            btnLayout.Dock = DockStyle.Fill;
+            btnLayout.FlowDirection = FlowDirection.TopDown;
+            btnLayout.AutoSize = true;
+            btnLayout.WrapContents = false;
+            btnLayout.Padding = new Padding(10, 0, 0, 0);
 
             _btnUp = new Button();
             _btnUp.Text = "▲ Up";
-            _btnUp.Location = new Point(260, 55);
-            _btnUp.Size = new Size(60, 30);
+            _btnUp.AutoSize = true;
             _btnUp.Click += BtnUp_Click;
 
             _btnDown = new Button();
             _btnDown.Text = "▼ Down";
-            _btnDown.Location = new Point(260, 90);
-            _btnDown.Size = new Size(60, 30);
+            _btnDown.AutoSize = true;
             _btnDown.Click += BtnDown_Click;
+
+            btnLayout.Controls.Add(_btnUp);
+            btnLayout.Controls.Add(_btnDown);
+            listLayout.Controls.Add(btnLayout, 1, 0);
+
+            mainLayout.Controls.Add(listLayout, 0, 1);
+
+            var bottomLayout = new FlowLayoutPanel();
+            bottomLayout.Dock = DockStyle.Fill;
+            bottomLayout.FlowDirection = FlowDirection.RightToLeft;
+            bottomLayout.AutoSize = true;
+            bottomLayout.Margin = new Padding(0, 10, 0, 0);
 
             _btnSave = new Button();
             _btnSave.Text = "Save && Apply";
-            _btnSave.Location = new Point(160, 370);
-            _btnSave.Size = new Size(90, 30);
+            _btnSave.AutoSize = true;
             _btnSave.Click += BtnSave_Click;
 
             _btnCancel = new Button();
             _btnCancel.Text = "Cancel";
-            _btnCancel.Location = new Point(60, 370);
-            _btnCancel.Size = new Size(90, 30);
+            _btnCancel.AutoSize = true;
             _btnCancel.Click += (s, e) => this.Close();
 
-            this.Controls.Add(lblInfo);
-            this.Controls.Add(_checkedListBox);
-            this.Controls.Add(_btnUp);
-            this.Controls.Add(_btnDown);
-            this.Controls.Add(_btnSave);
-            this.Controls.Add(_btnCancel);
+            bottomLayout.Controls.Add(_btnSave);
+            bottomLayout.Controls.Add(_btnCancel);
+
+            mainLayout.Controls.Add(bottomLayout, 0, 2);
+
+            this.Controls.Add(mainLayout);
         }
 
         private void LoadData()
@@ -91,6 +125,7 @@ namespace AlligatorGh
             // Create a temporary list to sort them according to settings
             var items = new List<PluginTabSettings>();
 
+            int initialOrder = 0;
             foreach (var tab in allTabs)
             {
                 var existingSetting = savedSettings.FirstOrDefault(s => s.Name == tab.NameFull);
@@ -105,17 +140,21 @@ namespace AlligatorGh
                 }
                 else
                 {
+                    // If no setting exists, preserve the tab's current order in the ribbon
+                    // rather than sticking it at the end alphabetically
+                    int indexInRibbon = ribbon.Tabs.FindIndex(t => t.NameFull == tab.NameFull);
                     items.Add(new PluginTabSettings
                     {
                         Name = tab.NameFull,
                         Visible = true, // default visible
-                        Order = int.MaxValue // put at the end
+                        Order = savedSettings.Count == 0 ? initialOrder : int.MaxValue // if no settings exist at all, use current loaded order, otherwise put new tabs at end
                     });
                 }
+                initialOrder++;
             }
 
-            // Sort by order, then alphabetically for those without specific order
-            items = items.OrderBy(x => x.Order).ThenBy(x => x.Name).ToList();
+            // Sort by order, then by their current order in the ribbon if they have int.MaxValue order
+            items = items.OrderBy(x => x.Order).ThenBy(x => allTabs.FindIndex(t => t.NameFull == x.Name)).ToList();
 
             foreach (var item in items)
             {
