@@ -15,6 +15,10 @@ namespace AlligatorGh
         private static Color _origGrid;
         private static Color _origEdge;
         private static Color _origShade;
+        private static Color _origWireDefault;
+        private static Color _origWireSelectedA;
+        private static Color _origWireSelectedB;
+        private static Color _origWireEmpty;
 
         public CanvasSettingsComponent()
           : base("CanvasSettings", "CanvasSet",
@@ -30,12 +34,16 @@ namespace AlligatorGh
             pManager.AddColourParameter("Grid", "G", "Custom grid lines color", GH_ParamAccess.item);
             pManager.AddColourParameter("Edge", "E", "Custom edge color of the canvas", GH_ParamAccess.item);
             pManager.AddColourParameter("Shade", "S", "Custom shadow/shade color", GH_ParamAccess.item);
+            pManager.AddColourParameter("Wire Default", "WD", "Custom default wire color", GH_ParamAccess.item);
+            pManager.AddColourParameter("Wire Selected A", "WA", "Custom selected wire color (A)", GH_ParamAccess.item);
+            pManager.AddColourParameter("Wire Selected B", "WB", "Custom selected wire color (B)", GH_ParamAccess.item);
+            pManager.AddColourParameter("Wire Empty", "WE", "Custom empty/null wire color", GH_ParamAccess.item);
 
             // Make colors optional so users can pick and choose
-            pManager[1].Optional = true;
-            pManager[2].Optional = true;
-            pManager[3].Optional = true;
-            pManager[4].Optional = true;
+            for (int i = 1; i < pManager.ParamCount; i++)
+            {
+                pManager[i].Optional = true;
+            }
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -52,6 +60,10 @@ namespace AlligatorGh
                 _origGrid = GH_Skin.canvas_grid;
                 _origEdge = GH_Skin.canvas_edge;
                 _origShade = GH_Skin.canvas_shade;
+                _origWireDefault = GH_Skin.wire_default;
+                _origWireSelectedA = GH_Skin.wire_selected_a;
+                _origWireSelectedB = GH_Skin.wire_selected_b;
+                _origWireEmpty = GH_Skin.wire_empty;
                 _originalSaved = true;
             }
 
@@ -65,16 +77,28 @@ namespace AlligatorGh
                 GH_Skin.canvas_grid = _origGrid;
                 GH_Skin.canvas_edge = _origEdge;
                 GH_Skin.canvas_shade = _origShade;
+                GH_Skin.wire_default = _origWireDefault;
+                GH_Skin.wire_selected_a = _origWireSelectedA;
+                GH_Skin.wire_selected_b = _origWireSelectedB;
+                GH_Skin.wire_empty = _origWireEmpty;
 
                 Color back = Color.Empty;
                 Color grid = Color.Empty;
                 Color edge = Color.Empty;
                 Color shade = Color.Empty;
+                Color wDef = Color.Empty;
+                Color wSelA = Color.Empty;
+                Color wSelB = Color.Empty;
+                Color wEmp = Color.Empty;
 
                 if (DA.GetData(1, ref back)) GH_Skin.canvas_back = back;
                 if (DA.GetData(2, ref grid)) GH_Skin.canvas_grid = grid;
                 if (DA.GetData(3, ref edge)) GH_Skin.canvas_edge = edge;
                 if (DA.GetData(4, ref shade)) GH_Skin.canvas_shade = shade;
+                if (DA.GetData(5, ref wDef)) GH_Skin.wire_default = wDef;
+                if (DA.GetData(6, ref wSelA)) GH_Skin.wire_selected_a = wSelA;
+                if (DA.GetData(7, ref wSelB)) GH_Skin.wire_selected_b = wSelB;
+                if (DA.GetData(8, ref wEmp)) GH_Skin.wire_empty = wEmp;
             }
             else
             {
@@ -83,6 +107,10 @@ namespace AlligatorGh
                 GH_Skin.canvas_grid = _origGrid;
                 GH_Skin.canvas_edge = _origEdge;
                 GH_Skin.canvas_shade = _origShade;
+                GH_Skin.wire_default = _origWireDefault;
+                GH_Skin.wire_selected_a = _origWireSelectedA;
+                GH_Skin.wire_selected_b = _origWireSelectedB;
+                GH_Skin.wire_empty = _origWireEmpty;
             }
 
             // Force the canvas to redraw to show changes immediately
