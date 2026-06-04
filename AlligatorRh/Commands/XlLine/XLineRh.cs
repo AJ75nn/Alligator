@@ -9,14 +9,14 @@ using Rhino.Input.Custom;
 
 namespace AlligatorRh.Commands.XlLine
 {
-    public class XLineCommand : Command
+    public class XLineRh : Command
     {
-        public XLineCommand()
+        public XLineRh()
         {
             Instance = this;
         }
 
-        public static XLineCommand Instance { get; private set; }
+        public static XLineRh Instance { get; private set; }
 
         public override string EnglishName => "XLine";
 
