@@ -74,8 +74,8 @@ namespace AlligatorRh
                 {
                     try
                     {
-                        Line xline = XLineEngine.CreateXLine(e.CurrentPoint, direction);
-                        e.Display.DrawLine(xline, layerColor);
+                        Curve xline = XLineEngine.CreateXLine(e.CurrentPoint, direction);
+                        e.Display.DrawCurve(xline, layerColor);
                     }
                     catch (ArgumentException) {}
                 };
@@ -87,8 +87,8 @@ namespace AlligatorRh
 
                 try
                 {
-                    Line xline = XLineEngine.CreateXLine(gp.Point(), direction);
-                    doc.Objects.AddLine(xline);
+                    Curve xline = XLineEngine.CreateXLine(gp.Point(), direction);
+                    doc.Objects.AddCurve(xline);
                     doc.Views.Redraw();
                 }
                 catch (ArgumentException ex)
@@ -111,8 +111,8 @@ namespace AlligatorRh
                 {
                     try
                     {
-                        Line xline = XLineEngine.CreateXLine(basePoint, e.CurrentPoint);
-                        e.Display.DrawLine(xline, layerColor);
+                        Curve xline = XLineEngine.CreateXLine(basePoint, e.CurrentPoint);
+                        e.Display.DrawCurve(xline, layerColor);
                     }
                     catch (ArgumentException) {}
                 };
@@ -124,8 +124,8 @@ namespace AlligatorRh
 
                 try
                 {
-                    Line xline = XLineEngine.CreateXLine(basePoint, gpThrough.Point());
-                    doc.Objects.AddLine(xline);
+                    Curve xline = XLineEngine.CreateXLine(basePoint, gpThrough.Point());
+                    doc.Objects.AddCurve(xline);
                     doc.Views.Redraw();
                 }
                 catch (ArgumentException ex)
@@ -214,8 +214,8 @@ namespace AlligatorRh
                 {
                     try
                     {
-                        Line xline = XLineEngine.CreateBisectingXLine(vertex, p1, e.CurrentPoint);
-                        e.Display.DrawLine(xline, layerColor);
+                        Curve xline = XLineEngine.CreateBisectingXLine(vertex, p1, e.CurrentPoint);
+                        e.Display.DrawCurve(xline, layerColor);
                     }
                     catch (ArgumentException) {}
                 };
@@ -225,8 +225,8 @@ namespace AlligatorRh
 
                 try
                 {
-                    Line xline = XLineEngine.CreateBisectingXLine(vertex, p1, gpEnd.Point());
-                    doc.Objects.AddLine(xline);
+                    Curve xline = XLineEngine.CreateBisectingXLine(vertex, p1, gpEnd.Point());
+                    doc.Objects.AddCurve(xline);
                     doc.Views.Redraw();
                 }
                 catch(ArgumentException ex)
@@ -281,7 +281,9 @@ namespace AlligatorRh
                 return Result.Failure;
             }
 
-            Line refLine = new Line(crv.PointAtStart, crv.PointAtEnd);
+            // Using the curve start/end directly for direction derivation
+            Vector3d refDirection = crv.PointAtEnd - crv.PointAtStart;
+            refDirection.Unitize();
 
             if (isThrough)
             {
@@ -294,8 +296,8 @@ namespace AlligatorRh
                     {
                         try
                         {
-                            Line xline = XLineEngine.CreateXLine(e.CurrentPoint, refLine.Direction);
-                            e.Display.DrawLine(xline, layerColor);
+                            Curve xline = XLineEngine.CreateXLine(e.CurrentPoint, refDirection);
+                            e.Display.DrawCurve(xline, layerColor);
                         }
                         catch(ArgumentException) {}
                     };
@@ -305,8 +307,8 @@ namespace AlligatorRh
 
                     try
                     {
-                        Line xline = XLineEngine.CreateXLine(gpThrough.Point(), refLine.Direction);
-                        doc.Objects.AddLine(xline);
+                        Curve xline = XLineEngine.CreateXLine(gpThrough.Point(), refDirection);
+                        doc.Objects.AddCurve(xline);
                         doc.Views.Redraw();
                     }
                     catch (ArgumentException ex)
@@ -326,8 +328,8 @@ namespace AlligatorRh
                     {
                         try
                         {
-                            Line xline = XLineEngine.CreateOffsetXLine(refLine, distance, e.CurrentPoint);
-                            e.Display.DrawLine(xline, layerColor);
+                            Curve xline = XLineEngine.CreateOffsetXLine(crv, distance, e.CurrentPoint);
+                            e.Display.DrawCurve(xline, layerColor);
                         }
                         catch(ArgumentException) {}
                     };
@@ -337,8 +339,8 @@ namespace AlligatorRh
 
                     try
                     {
-                        Line xline = XLineEngine.CreateOffsetXLine(refLine, distance, gpSide.Point());
-                        doc.Objects.AddLine(xline);
+                        Curve xline = XLineEngine.CreateOffsetXLine(crv, distance, gpSide.Point());
+                        doc.Objects.AddCurve(xline);
                         doc.Views.Redraw();
                     }
                     catch (ArgumentException ex)

@@ -1,4 +1,5 @@
 using System;
+using Rhino;
 using Rhino.Geometry;
 
 namespace AlligatorCore
@@ -16,11 +17,13 @@ namespace AlligatorCore
 
         /// <summary>
         /// Creates an XLine (infinite line) extending infinitely in both directions from the base point.
+        /// By returning a PolylineCurve with the basePoint as an explicit vertex, we prevent Rhino's display pipeline
+        /// from losing precision when interpolating massive lengths, preventing flickering.
         /// </summary>
         /// <param name="basePoint">The origin point of the line.</param>
         /// <param name="direction">The direction vector.</param>
-        /// <returns>A Line geometry that extends infinitely.</returns>
-        public static Line CreateXLine(Point3d basePoint, Vector3d direction)
+        /// <returns>A Curve geometry that extends infinitely.</returns>
+        public static Curve CreateXLine(Point3d basePoint, Vector3d direction)
         {
             if (!basePoint.IsValid)
                 throw new ArgumentException("Base point is invalid.", nameof(basePoint));
@@ -34,7 +37,9 @@ namespace AlligatorCore
             Point3d start = basePoint - (direction * InfinityScale);
             Point3d end = basePoint + (direction * InfinityScale);
 
-            return new Line(start, end);
+            // Using a polyline with 3 points ensures the line passes EXACTLY through the base point in the display pipeline.
+            Polyline poly = new Polyline() { start, basePoint, end };
+            return poly.ToNurbsCurve();
         }
 
         /// <summary>
@@ -42,8 +47,8 @@ namespace AlligatorCore
         /// </summary>
         /// <param name="p1">The first point.</param>
         /// <param name="p2">The second point.</param>
-        /// <returns>A Line geometry that extends infinitely.</returns>
-        public static Line CreateXLine(Point3d p1, Point3d p2)
+        /// <returns>A Curve geometry that extends infinitely.</returns>
+        public static Curve CreateXLine(Point3d p1, Point3d p2)
         {
             if (!p1.IsValid)
                 throw new ArgumentException("First point is invalid.", nameof(p1));
@@ -56,13 +61,20 @@ namespace AlligatorCore
             if (direction.IsZero)
                 throw new ArgumentException("Points are coincident; cannot determine direction.", nameof(p2));
 
-            return CreateXLine(p1, direction);
+            direction.Unitize();
+
+            Point3d start = p1 - (direction * InfinityScale);
+            Point3d end = p1 + (direction * InfinityScale);
+
+            // Pinning both interaction points ensures maximum precision
+            Polyline poly = new Polyline() { start, p1, p2, end };
+            return poly.ToNurbsCurve();
         }
 
         /// <summary>
         /// Creates a horizontal XLine through a point (using World XY plane X-axis).
         /// </summary>
-        public static Line CreateHorizontalXLine(Point3d point)
+        public static Curve CreateHorizontalXLine(Point3d point)
         {
             return CreateXLine(point, Vector3d.XAxis);
         }
@@ -70,7 +82,7 @@ namespace AlligatorCore
         /// <summary>
         /// Creates a vertical XLine through a point (using World XY plane Y-axis).
         /// </summary>
-        public static Line CreateVerticalXLine(Point3d point)
+        public static Curve CreateVerticalXLine(Point3d point)
         {
             return CreateXLine(point, Vector3d.YAxis);
         }
@@ -78,7 +90,7 @@ namespace AlligatorCore
         /// <summary>
         /// Creates an XLine at a specific angle from the World X-axis.
         /// </summary>
-        public static Line CreateAngledXLine(Point3d point, double radians)
+        public static Curve CreateAngledXLine(Point3d point, double radians)
         {
             Vector3d direction = new Vector3d(Math.Cos(radians), Math.Sin(radians), 0);
             return CreateXLine(point, direction);
@@ -87,7 +99,7 @@ namespace AlligatorCore
         /// <summary>
         /// Creates an XLine that bisects the angle defined by three points (vertex, start, end).
         /// </summary>
-        public static Line CreateBisectingXLine(Point3d vertex, Point3d p1, Point3d p2)
+        public static Curve CreateBisectingXLine(Point3d vertex, Point3d p1, Point3d p2)
         {
             Vector3d v1 = p1 - vertex;
             Vector3d v2 = p2 - vertex;
@@ -111,11 +123,15 @@ namespace AlligatorCore
         }
 
         /// <summary>
-        /// Creates an XLine offset from an existing line by a given distance.
+        /// Creates an XLine offset from an existing curve by a given distance.
         /// </summary>
-        public static Line CreateOffsetXLine(Line referenceLine, double distance, Point3d sidePoint)
+        public static Curve CreateOffsetXLine(Curve referenceCurve, double distance, Point3d sidePoint)
         {
-            Vector3d dir = referenceLine.Direction;
+            if (referenceCurve == null || !referenceCurve.IsLinear(RhinoMath.ZeroTolerance))
+                throw new ArgumentException("Reference curve is not linear.");
+
+            Line refLine = new Line(referenceCurve.PointAtStart, referenceCurve.PointAtEnd);
+            Vector3d dir = refLine.Direction;
             if (dir.IsZero)
                 throw new ArgumentException("Reference line has zero length.");
 
@@ -127,7 +143,7 @@ namespace AlligatorCore
             normal.Unitize();
 
             // Determine if sidePoint is in the direction of the normal or opposite
-            Vector3d toSide = sidePoint - referenceLine.From;
+            Vector3d toSide = sidePoint - refLine.From;
             double dot = normal * toSide;
 
             if (dot < 0)
@@ -135,8 +151,8 @@ namespace AlligatorCore
                 normal = -normal;
             }
 
-            Point3d newBasePoint = referenceLine.From + normal * distance;
-            return CreateXLine(newBasePoint, referenceLine.Direction);
+            Point3d newBasePoint = refLine.From + normal * distance;
+            return CreateXLine(newBasePoint, refLine.Direction);
         }
     }
 }
