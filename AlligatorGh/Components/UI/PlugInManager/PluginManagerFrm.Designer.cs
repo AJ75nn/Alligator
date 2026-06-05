@@ -32,32 +32,17 @@ namespace AlligatorGh.Components.UI.PlugInManager
         {
             flpTabList = new FlowLayoutPanel();
             flpMainLayout = new TableLayoutPanel();
+            tlpBottomPanel = new TableLayoutPanel();
+            btnReset = new Button();
+            btnSave = new Button();
+            lblSummary = new Label();
+            tlpTopPanel = new TableLayoutPanel();
+            btnNone = new Button();
+            btnAll = new Button();
+            chbIcon = new CheckBox();
             flpMainLayout.SuspendLayout();
-            // 
-            // flpMainLayout
-            // 
-            flpMainLayout.Dock = DockStyle.Fill;
-            flpMainLayout.RowCount = 4;
-            flpMainLayout.ColumnCount = 1;
-            flpMainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Top buttons
-            flpMainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f)); // List
-            flpMainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Summary Footer
-            flpMainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Bottom buttons
-            flpMainLayout.Padding = new Padding(20);
-
-
-
-            flpMainLayout.Controls.Add(flpTabList, 0, 1);
-            flpMainLayout.Dock = DockStyle.Fill;
-            flpMainLayout.Location = new System.Drawing.Point(0, 0);
-            flpMainLayout.Name = "flpMainLayout";
-            flpMainLayout.RowCount = 4;
-            flpMainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            flpMainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            flpMainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            flpMainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            flpMainLayout.Size = new System.Drawing.Size(828, 894);
-            
+            tlpBottomPanel.SuspendLayout();
+            tlpTopPanel.SuspendLayout();
             SuspendLayout();
             // 
             // flpTabList
@@ -65,25 +50,160 @@ namespace AlligatorGh.Components.UI.PlugInManager
             flpTabList.AutoScroll = true;
             flpTabList.BackColor = System.Drawing.Color.White;
             flpTabList.BorderStyle = BorderStyle.FixedSingle;
+            flpTabList.Dock = DockStyle.Fill;
             flpTabList.FlowDirection = FlowDirection.TopDown;
-            flpTabList.Location = new System.Drawing.Point(3, 23);
+            flpTabList.Location = new System.Drawing.Point(23, 84);
             flpTabList.Name = "flpTabList";
-            flpTabList.Size = new System.Drawing.Size(732, 14);
+            flpTabList.Size = new System.Drawing.Size(436, 646);
             flpTabList.TabIndex = 0;
             flpTabList.WrapContents = false;
-           
+            flpTabList.DragDrop += flpTabList_DragDrop;
+            flpTabList.DragEnter += flpTabList_DragEnter;
+            flpTabList.DragOver += flpTabList_DragOver;
+            // 
+            // flpMainLayout
+            // 
+            flpMainLayout.ColumnCount = 1;
+            flpMainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40F));
+            flpMainLayout.Controls.Add(flpTabList, 0, 1);
+            flpMainLayout.Controls.Add(tlpBottomPanel, 0, 3);
+            flpMainLayout.Controls.Add(lblSummary, 0, 2);
+            flpMainLayout.Controls.Add(tlpTopPanel, 0, 0);
+            flpMainLayout.Dock = DockStyle.Fill;
+            flpMainLayout.Location = new System.Drawing.Point(0, 0);
+            flpMainLayout.Name = "flpMainLayout";
+            flpMainLayout.Padding = new Padding(20);
+            flpMainLayout.RowCount = 4;
+            flpMainLayout.RowStyles.Add(new RowStyle());
+            flpMainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            flpMainLayout.RowStyles.Add(new RowStyle());
+            flpMainLayout.RowStyles.Add(new RowStyle());
+            flpMainLayout.Size = new System.Drawing.Size(482, 894);
+            flpMainLayout.TabIndex = 0;
+            // 
+            // tlpBottomPanel
+            // 
+            tlpBottomPanel.AutoSize = true;
+            tlpBottomPanel.ColumnCount = 2;
+            tlpBottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpBottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpBottomPanel.Controls.Add(btnReset, 0, 0);
+            tlpBottomPanel.Controls.Add(btnSave, 1, 0);
+            tlpBottomPanel.Dock = DockStyle.Fill;
+            tlpBottomPanel.Location = new System.Drawing.Point(20, 833);
+            tlpBottomPanel.Margin = new Padding(0, 10, 0, 0);
+            tlpBottomPanel.Name = "tlpBottomPanel";
+            tlpBottomPanel.RowCount = 1;
+            tlpBottomPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tlpBottomPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tlpBottomPanel.Size = new System.Drawing.Size(442, 41);
+            tlpBottomPanel.TabIndex = 2;
+            // 
+            // btnReset
+            // 
+            btnReset.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnReset.Location = new System.Drawing.Point(3, 3);
+            btnReset.Name = "btnReset";
+            btnReset.Size = new System.Drawing.Size(144, 35);
+            btnReset.TabIndex = 2;
+            btnReset.Text = "Reset";
+            btnReset.UseVisualStyleBackColor = true;
+            btnReset.Click += btnReset_Click;
+            // 
+            // btnSave
+            // 
+            btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnSave.Location = new System.Drawing.Point(295, 3);
+            btnSave.Name = "btnSave";
+            btnSave.Size = new System.Drawing.Size(144, 35);
+            btnSave.TabIndex = 1;
+            btnSave.Text = "Apply";
+            btnSave.UseVisualStyleBackColor = true;
+            btnSave.Click += btnSave_Click;
+            // 
+            // lblSummary
+            // 
+            lblSummary.AutoSize = true;
+            lblSummary.Dock = DockStyle.Fill;
+            lblSummary.Location = new System.Drawing.Point(20, 753);
+            lblSummary.Margin = new Padding(0, 20, 0, 20);
+            lblSummary.Name = "lblSummary";
+            lblSummary.Size = new System.Drawing.Size(442, 50);
+            lblSummary.TabIndex = 3;
+            lblSummary.Text = "Total Tabs : 51 Natives : 10 Installed Plugins : 41 Visible : 12 Hidden : 39";
+            lblSummary.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // tlpTopPanel
+            // 
+            tlpTopPanel.AutoSize = true;
+            tlpTopPanel.ColumnCount = 3;
+            tlpTopPanel.ColumnStyles.Add(new ColumnStyle());
+            tlpTopPanel.ColumnStyles.Add(new ColumnStyle());
+            tlpTopPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpTopPanel.Controls.Add(btnNone, 1, 0);
+            tlpTopPanel.Controls.Add(btnAll, 0, 0);
+            tlpTopPanel.Controls.Add(chbIcon, 2, 0);
+            tlpTopPanel.Dock = DockStyle.Fill;
+            tlpTopPanel.Location = new System.Drawing.Point(20, 20);
+            tlpTopPanel.Margin = new Padding(0, 0, 0, 20);
+            tlpTopPanel.Name = "tlpTopPanel";
+            tlpTopPanel.RowCount = 1;
+            tlpTopPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tlpTopPanel.Size = new System.Drawing.Size(442, 41);
+            tlpTopPanel.TabIndex = 4;
+            // 
+            // btnNone
+            // 
+            btnNone.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnNone.Location = new System.Drawing.Point(153, 3);
+            btnNone.Name = "btnNone";
+            btnNone.Size = new System.Drawing.Size(144, 35);
+            btnNone.TabIndex = 1;
+            btnNone.Text = "Check None";
+            btnNone.UseVisualStyleBackColor = true;
+            btnNone.Click += btnNone_Click;
+            // 
+            // btnAll
+            // 
+            btnAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnAll.Location = new System.Drawing.Point(3, 3);
+            btnAll.Name = "btnAll";
+            btnAll.Size = new System.Drawing.Size(144, 35);
+            btnAll.TabIndex = 0;
+            btnAll.Text = "Check All";
+            btnAll.UseVisualStyleBackColor = true;
+            btnAll.Click += btnAll_Click;
+            // 
+            // chbIcon
+            // 
+            chbIcon.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            chbIcon.AutoSize = true;
+            chbIcon.Checked = true;
+            chbIcon.CheckState = CheckState.Checked;
+            chbIcon.Location = new System.Drawing.Point(315, 9);
+            chbIcon.Name = "chbIcon";
+            chbIcon.Size = new System.Drawing.Size(124, 29);
+            chbIcon.TabIndex = 2;
+            chbIcon.Text = "ShowIcons";
+            chbIcon.UseVisualStyleBackColor = true;
+            chbIcon.CheckedChanged += chbIcon_CheckedChanged;
             // 
             // PluginManagerFrm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(828, 894);
+            AutoScaleMode = AutoScaleMode.Inherit;
+            BackColor = System.Drawing.Color.WhiteSmoke;
+            ClientSize = new System.Drawing.Size(482, 894);
             Controls.Add(flpMainLayout);
+            FormBorderStyle = FormBorderStyle.SizableToolWindow;
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "PluginManagerFrm";
-            Text = "PluginManagerFrm";
+            Text = "Alligator Plugin Manager";
             flpMainLayout.ResumeLayout(false);
+            flpMainLayout.PerformLayout();
+            tlpBottomPanel.ResumeLayout(false);
+            tlpTopPanel.ResumeLayout(false);
+            tlpTopPanel.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -91,5 +211,13 @@ namespace AlligatorGh.Components.UI.PlugInManager
 
         private System.Windows.Forms.FlowLayoutPanel flpTabList;
         private TableLayoutPanel flpMainLayout;
+        private Button btnSave;
+        private TableLayoutPanel tlpBottomPanel;
+        private Button btnReset;
+        private Label lblSummary;
+        private TableLayoutPanel tlpTopPanel;
+        private Button btnNone;
+        private Button btnAll;
+        private CheckBox chbIcon;
     }
 }

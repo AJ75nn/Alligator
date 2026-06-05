@@ -40,7 +40,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
             managerMenuItem.Name = "AlligatorPluginManager";
             managerMenuItem.Click += (s, e) =>
             {
-                PluginManagerForm form = new PluginManagerForm();
+                PluginManagerFrm form = new PluginManagerFrm();
                 form.Show(documentEditor);
             };
 
