@@ -56,15 +56,24 @@ namespace AlligatorGh
             }
         }
 
+        public static void ApplyLayoutPreview(List<PluginTabSettings> temporarySettings)
+        {
+            ApplyLayoutInternal(temporarySettings);
+        }
+
         public static void ApplyLayout()
+        {
+            var settings = PluginManagerSettings.LoadSettings();
+            ApplyLayoutInternal(settings);
+        }
+
+        private static void ApplyLayoutInternal(List<PluginTabSettings> settings)
         {
             if (Instances.DocumentEditor == null) return;
             var ribbon = GetRibbon(Instances.DocumentEditor);
             if (ribbon == null) return;
 
             InitializeBackup();
-
-            var settings = PluginManagerSettings.LoadSettings();
 
             var ribbonTabs = GetRibbonTabs(ribbon);
             if (ribbonTabs == null) return;
