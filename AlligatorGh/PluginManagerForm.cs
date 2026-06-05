@@ -159,7 +159,7 @@ namespace AlligatorGh
             _btnSave.Click += BtnSave_Click;
 
             _btnCancel = new Button { Text = "Cancel", AutoSize = true, MinimumSize = new Size(80, 30), Padding = new Padding(5) };
-            _btnCancel.Click += (s, e) => this.Close();
+            _btnCancel.Click += BtnCancel_Click;
 
             _btnReset = new Button { Text = "Reset to Default", AutoSize = true, MinimumSize = new Size(100, 30), Padding = new Padding(5) };
             _btnReset.Click += BtnReset_Click;
@@ -258,8 +258,7 @@ namespace AlligatorGh
                 };
 
                 // Forward click to form for multi-select logic
-                row.Click += Row_Click;
-                row.Controls[0].Click += Row_Click; // TableLayout
+                WireUpClickRecursive(row);
 
                 _listLayout.Controls.Add(row);
             }
@@ -289,6 +288,20 @@ namespace AlligatorGh
             foreach (var item in itemsToUpdate)
             {
                 item.IsVisible = false;
+            }
+        }
+
+        private void WireUpClickRecursive(Control ctrl)
+        {
+            // Do not wire up the CheckBox itself, so it strictly toggles visibility
+            if (!(ctrl is CheckBox))
+            {
+                ctrl.Click += Row_Click;
+            }
+
+            foreach (Control child in ctrl.Controls)
+            {
+                WireUpClickRecursive(child);
             }
         }
 
@@ -349,6 +362,11 @@ namespace AlligatorGh
             var allItems = _listLayout.Controls.OfType<DraggablePluginItem>().ToList();
             var selectedItems = allItems.Where(i => i.IsSelected).ToList();
             return selectedItems.Count > 0 ? selectedItems : allItems;
+        }
+
+        private void BtnCancel_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
 
         private void BtnSave_Click(object sender, EventArgs e)

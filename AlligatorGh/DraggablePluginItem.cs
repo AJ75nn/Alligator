@@ -91,17 +91,8 @@ namespace AlligatorGh
             };
 
             // Wire up events
-            _lblHandle.MouseDown += (s, e) =>
-            {
-                // Important for allowing parent to intercept dragging smoothly
-                _lblHandle.Capture = false;
-                HandleMouseDown?.Invoke(this, e);
-            };
-
-            _chkVisible.CheckedChanged += (s, e) =>
-            {
-                VisibilityChanged?.Invoke(this, EventArgs.Empty);
-            };
+            _lblHandle.MouseDown += LblHandle_MouseDown;
+            _chkVisible.CheckedChanged += ChkVisible_CheckedChanged;
 
             // Allow selection by clicking the background or the text label
             this.Click += OnItemClick;
@@ -113,6 +104,18 @@ namespace AlligatorGh
             table.Controls.Add(_lblName, 2, 0);
 
             this.Controls.Add(table);
+        }
+
+        private void LblHandle_MouseDown(object sender, MouseEventArgs e)
+        {
+            // Important for allowing parent to intercept dragging smoothly
+            _lblHandle.Capture = false;
+            HandleMouseDown?.Invoke(this, e);
+        }
+
+        private void ChkVisible_CheckedChanged(object sender, EventArgs e)
+        {
+            VisibilityChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private void OnItemClick(object sender, EventArgs e)
