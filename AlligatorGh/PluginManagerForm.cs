@@ -137,31 +137,30 @@ namespace AlligatorGh
         private void InitializeComponent()
         {
             this.Text = "Alligator Plugin Manager";
-            this.Size = new Size(600, 800);
+            this.Size = new Size(800, 900);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.SizableToolWindow;
-            this.MinimumSize = new Size(500, 600);
+            this.MinimumSize = new Size(600, 700);
             this.BackColor = Color.WhiteSmoke;
 
             var mainLayout = new TableLayoutPanel();
             mainLayout.Dock = DockStyle.Fill;
-            mainLayout.RowCount = 6;
+            mainLayout.RowCount = 5;
             mainLayout.ColumnCount = 1;
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Title
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Top buttons
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Headers
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f)); // List
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Summary Footer
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Bottom buttons
-            mainLayout.Padding = new Padding(10);
+            mainLayout.Padding = new Padding(20);
 
             // Title
             var lblTitle = new Label
             {
                 Text = "Alligator Plugin Manager",
-                Font = new Font("Arial", 14, FontStyle.Regular),
+                Font = new Font("Segoe UI", 18, FontStyle.Regular),
                 AutoSize = true,
-                Margin = new Padding(0, 0, 0, 10)
+                Margin = new Padding(0, 0, 0, 20)
             };
             mainLayout.Controls.Add(lblTitle, 0, 0);
 
@@ -170,7 +169,7 @@ namespace AlligatorGh
             bulkLayout.Dock = DockStyle.Fill;
             bulkLayout.FlowDirection = FlowDirection.LeftToRight;
             bulkLayout.AutoSize = true;
-            bulkLayout.Margin = new Padding(0, 0, 0, 5);
+            bulkLayout.Margin = new Padding(0, 0, 0, 20);
 
             _btnCheckAll = new Button { Text = "Check All", AutoSize = true, MinimumSize = new Size(80, 30), Padding = new Padding(5) };
             _btnCheckAll.Click += BtnCheckAll_Click;
@@ -187,35 +186,7 @@ namespace AlligatorGh
 
             mainLayout.Controls.Add(bulkLayout, 0, 1);
 
-            // Headers
-            var headerTable = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 6,
-                RowCount = 1,
-                Margin = new Padding(0, 10, 0, 0),
-                Height = 30,
-                CellBorderStyle = TableLayoutPanelCellBorderStyle.Single
-            };
-            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
-            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
-            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
-            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
-            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
 
-            var lblVis = new Label { Text = "Visibility", Font = new Font("Arial", 9, FontStyle.Bold), TextAlign = ContentAlignment.BottomCenter, Dock = DockStyle.Fill };
-            var lblTab = new Label { Text = "Tab Name", Font = new Font("Arial", 9, FontStyle.Bold), TextAlign = ContentAlignment.BottomLeft, Dock = DockStyle.Fill };
-            var lblCat = new Label { Text = "Categories", Font = new Font("Arial", 9, FontStyle.Bold), TextAlign = ContentAlignment.BottomCenter, Dock = DockStyle.Fill };
-            var lblComp = new Label { Text = "Components", Font = new Font("Arial", 9, FontStyle.Bold), TextAlign = ContentAlignment.BottomCenter, Dock = DockStyle.Fill };
-
-            headerTable.Controls.Add(lblVis, 1, 0);
-            headerTable.SetColumnSpan(lblVis, 2);
-            headerTable.Controls.Add(lblTab, 3, 0);
-            headerTable.Controls.Add(lblCat, 4, 0);
-            headerTable.Controls.Add(lblComp, 5, 0);
-
-            mainLayout.Controls.Add(headerTable, 0, 2);
 
             // Item list layout
             _listLayout = new FlowLayoutPanel();
@@ -226,18 +197,18 @@ namespace AlligatorGh
             _listLayout.BackColor = Color.White;
             _listLayout.BorderStyle = BorderStyle.FixedSingle;
 
-            mainLayout.Controls.Add(_listLayout, 0, 3);
+            mainLayout.Controls.Add(_listLayout, 0, 2);
 
             // Summary
             _lblSummary = new Label
             {
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Arial", 9, FontStyle.Bold),
-                Height = 30,
-                Margin = new Padding(0, 5, 0, 5)
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                AutoSize = true,
+                Margin = new Padding(0, 20, 0, 20)
             };
-            mainLayout.Controls.Add(_lblSummary, 0, 4);
+            mainLayout.Controls.Add(_lblSummary, 0, 3);
 
             // Bottom buttons layout
             var bottomLayout = new FlowLayoutPanel();
@@ -259,7 +230,7 @@ namespace AlligatorGh
             bottomLayout.Controls.Add(_btnCancel);
             bottomLayout.Controls.Add(_btnReset);
 
-            mainLayout.Controls.Add(bottomLayout, 0, 5);
+            mainLayout.Controls.Add(bottomLayout, 0, 4);
 
             this.Controls.Add(mainLayout);
         }
@@ -383,9 +354,7 @@ namespace AlligatorGh
                     IsVisible = item.Visible,
                     PluginIcon = icon,
                     ShowIcon = _chkShowIcons.Checked,
-                    Width = _listLayout.ClientSize.Width - 10,
-                    CategoryCount = catCount,
-                    ComponentCount = compCount
+                    Width = _listLayout.ClientSize.Width - 10
                 };
 
                 row.HandleMouseDown += (s, e) =>
