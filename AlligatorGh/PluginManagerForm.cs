@@ -16,8 +16,6 @@ namespace AlligatorGh
         private Button _btnCheckNone;
         private FlowLayoutPanel _listLayout;
 
-        private DraggablePluginItem _draggingItem = null;
-        private int _dragStartY = 0;
         private DraggablePluginItem _lastSelected = null;
 
         public PluginManagerForm()
@@ -25,26 +23,35 @@ namespace AlligatorGh
             InitializeComponent();
             LoadData();
 
-            _listLayout.MouseMove += ListLayout_MouseMove;
-            _listLayout.MouseUp += ListLayout_MouseUp;
+            // Set up native drag-and-drop on the FlowLayoutPanel
+            _listLayout.AllowDrop = true;
+            _listLayout.DragEnter += ListLayout_DragEnter;
+            _listLayout.DragOver += ListLayout_DragOver;
+            _listLayout.DragDrop += ListLayout_DragDrop;
         }
 
-        private void ListLayout_MouseMove(object sender, MouseEventArgs e)
+        private void ListLayout_DragEnter(object sender, DragEventArgs e)
         {
-            if (_draggingItem == null || e.Button != MouseButtons.Left) return;
+            if (e.Data.GetDataPresent(typeof(DraggablePluginItem)))
+            {
+                e.Effect = DragDropEffects.Move;
+            }
+        }
 
-            // Get absolute mouse position relative to the screen to avoid jitter
-            var mousePos = Cursor.Position;
-            var clientPos = _listLayout.PointToClient(mousePos);
+        private void ListLayout_DragOver(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(typeof(DraggablePluginItem))) return;
 
-            // Find which item the mouse is currently hovering over
+            DraggablePluginItem draggingItem = (DraggablePluginItem)e.Data.GetData(typeof(DraggablePluginItem));
+
+            Point clientPoint = _listLayout.PointToClient(new Point(e.X, e.Y));
+
             DraggablePluginItem targetItem = null;
             foreach (Control ctrl in _listLayout.Controls)
             {
-                if (ctrl is DraggablePluginItem item && item != _draggingItem)
+                if (ctrl is DraggablePluginItem item && item != draggingItem)
                 {
-                    // Check if mouse is within vertical bounds of this item
-                    if (clientPos.Y > item.Top && clientPos.Y < item.Bottom)
+                    if (clientPoint.Y > item.Top && clientPoint.Y < item.Bottom)
                     {
                         targetItem = item;
                         break;
@@ -54,26 +61,23 @@ namespace AlligatorGh
 
             if (targetItem != null)
             {
-                int currentIndex = _listLayout.Controls.GetChildIndex(_draggingItem);
+                int currentIndex = _listLayout.Controls.GetChildIndex(draggingItem);
                 int targetIndex = _listLayout.Controls.GetChildIndex(targetItem);
 
                 if (currentIndex != targetIndex)
                 {
-                    // Swap positions
-                    _listLayout.Controls.SetChildIndex(_draggingItem, targetIndex);
-
-                    // Live Preview update
+                    _listLayout.Controls.SetChildIndex(draggingItem, targetIndex);
                     ApplyLivePreview();
                 }
             }
         }
 
-        private void ListLayout_MouseUp(object sender, MouseEventArgs e)
+        private void ListLayout_DragDrop(object sender, DragEventArgs e)
         {
-            if (_draggingItem != null)
+            if (e.Data.GetDataPresent(typeof(DraggablePluginItem)))
             {
-                _draggingItem.BackColor = _draggingItem.IsSelected ? Color.LightBlue : Color.White;
-                _draggingItem = null;
+                DraggablePluginItem draggingItem = (DraggablePluginItem)e.Data.GetData(typeof(DraggablePluginItem));
+                draggingItem.BackColor = draggingItem.IsSelected ? Color.LightBlue : Color.White;
             }
         }
 
@@ -122,10 +126,10 @@ namespace AlligatorGh
             bulkLayout.AutoSize = true;
             bulkLayout.Margin = new Padding(0, 0, 0, 5);
 
-            _btnCheckAll = new Button { Text = "Check All", AutoSize = true };
+            _btnCheckAll = new Button { Text = "Check All", AutoSize = true, MinimumSize = new Size(80, 30), Padding = new Padding(5) };
             _btnCheckAll.Click += BtnCheckAll_Click;
 
-            _btnCheckNone = new Button { Text = "Check None", AutoSize = true };
+            _btnCheckNone = new Button { Text = "Check None", AutoSize = true, MinimumSize = new Size(80, 30), Padding = new Padding(5) };
             _btnCheckNone.Click += BtnCheckNone_Click;
 
             bulkLayout.Controls.Add(_btnCheckAll);
@@ -151,13 +155,13 @@ namespace AlligatorGh
             bottomLayout.AutoSize = true;
             bottomLayout.Margin = new Padding(0, 10, 0, 0);
 
-            _btnSave = new Button { Text = "Save && Apply", AutoSize = true };
+            _btnSave = new Button { Text = "Save && Apply", AutoSize = true, MinimumSize = new Size(100, 30), Padding = new Padding(5) };
             _btnSave.Click += BtnSave_Click;
 
-            _btnCancel = new Button { Text = "Cancel", AutoSize = true };
+            _btnCancel = new Button { Text = "Cancel", AutoSize = true, MinimumSize = new Size(80, 30), Padding = new Padding(5) };
             _btnCancel.Click += (s, e) => this.Close();
 
-            _btnReset = new Button { Text = "Reset to Default", AutoSize = true };
+            _btnReset = new Button { Text = "Reset to Default", AutoSize = true, MinimumSize = new Size(100, 30), Padding = new Padding(5) };
             _btnReset.Click += BtnReset_Click;
 
             bottomLayout.Controls.Add(_btnSave);
@@ -224,9 +228,10 @@ namespace AlligatorGh
                 {
                     if (e.Button == MouseButtons.Left)
                     {
-                        _draggingItem = row;
-                        _dragStartY = e.Y;
                         row.BackColor = Color.LightGray; // Highlight while dragging
+                        row.DoDragDrop(row, DragDropEffects.Move);
+                        // Once DoDragDrop returns, dragging has finished
+                        row.BackColor = row.IsSelected ? Color.LightBlue : Color.White;
                     }
                 };
 

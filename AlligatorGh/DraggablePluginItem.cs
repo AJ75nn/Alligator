@@ -8,6 +8,7 @@ namespace AlligatorGh
     {
         private Label _lblHandle;
         private CheckBox _chkVisible;
+        private Label _lblName;
         private bool _isSelected;
 
         public event EventHandler SelectionChanged;
@@ -16,8 +17,8 @@ namespace AlligatorGh
 
         public string PluginName
         {
-            get => _chkVisible.Text;
-            set => _chkVisible.Text = value;
+            get => _lblName.Text;
+            set => _lblName.Text = value;
         }
 
         public bool IsVisible
@@ -56,11 +57,12 @@ namespace AlligatorGh
             var table = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 2,
+                ColumnCount = 3,
                 RowCount = 1,
                 Margin = new Padding(0),
                 Padding = new Padding(0),
             };
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
@@ -77,7 +79,15 @@ namespace AlligatorGh
             {
                 Dock = DockStyle.Fill,
                 AutoSize = true,
+                Text = "", // CheckBox has no text, so clicking it strictly toggles
                 Padding = new Padding(5, 0, 0, 0)
+            };
+
+            _lblName = new Label
+            {
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoEllipsis = true
             };
 
             // Wire up events
@@ -93,12 +103,14 @@ namespace AlligatorGh
                 VisibilityChanged?.Invoke(this, EventArgs.Empty);
             };
 
-            // Allow selection by clicking the background
+            // Allow selection by clicking the background or the text label
             this.Click += OnItemClick;
             table.Click += OnItemClick;
+            _lblName.Click += OnItemClick;
 
             table.Controls.Add(_lblHandle, 0, 0);
             table.Controls.Add(_chkVisible, 1, 0);
+            table.Controls.Add(_lblName, 2, 0);
 
             this.Controls.Add(table);
         }
