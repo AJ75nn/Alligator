@@ -5,7 +5,7 @@ using System.Reflection;
 using Grasshopper;
 using Grasshopper.GUI.Ribbon;
 
-namespace AlligatorGh
+namespace AlligatorGh.Components.UI.PlugInManager
 {
     public static class PluginManager
     {

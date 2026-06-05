@@ -5,7 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 using Grasshopper;
 
-namespace AlligatorGh
+namespace AlligatorGh.Components.UI.PlugInManager
 {
     public class PluginManagerForm : Form
     {

@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace AlligatorGh
+namespace AlligatorGh.Components.UI.PlugInManager
 {
     public class DraggablePluginItem : UserControl
     {

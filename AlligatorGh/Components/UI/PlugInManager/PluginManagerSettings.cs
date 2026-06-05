@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Grasshopper;
 
-namespace AlligatorGh
+namespace AlligatorGh.Components.UI.PlugInManager
 {
     public class PluginTabSettings
     {

@@ -6,7 +6,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Linq;
 
-namespace AlligatorGh
+namespace AlligatorGh.Components.UI.PlugInManager
 {
     public class AlligatorGhPriority : GH_AssemblyPriority
     {
