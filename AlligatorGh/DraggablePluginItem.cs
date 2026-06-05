@@ -84,9 +84,9 @@ namespace AlligatorGh
                 Padding = new Padding(0)
             };
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40f));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 36f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40f));
 
             _lblHandle = new Label
             {
@@ -135,9 +135,9 @@ namespace AlligatorGh
             _picIcon.Click += OnItemClick;
 
             table.Controls.Add(_lblHandle, 0, 0);
-            table.Controls.Add(_chkVisible, 1, 0);
-            table.Controls.Add(_picIcon, 2, 0);
-            table.Controls.Add(_lblName, 3, 0);
+            table.Controls.Add(_picIcon, 1, 0);
+            table.Controls.Add(_lblName, 2, 0);
+            table.Controls.Add(_chkVisible, 3, 0);
 
             this.Controls.Add(table);
         }

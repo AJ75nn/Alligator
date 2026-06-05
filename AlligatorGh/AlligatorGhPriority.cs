@@ -47,14 +47,23 @@ namespace AlligatorGh
             // Insert near the top, after standard GH options
             displayMenu.DropDownItems.Insert(3, managerMenuItem);
 
-            // Wait for application idle to apply initial layout so that all plugins have had time to load
-            Application.Idle += Application_Idle;
+            // Wait for the document editor to fully load and show
+            documentEditor.Shown += DocumentEditor_Shown;
         }
 
-        private void Application_Idle(object sender, System.EventArgs e)
+        private void DocumentEditor_Shown(object sender, System.EventArgs e)
         {
-            Application.Idle -= Application_Idle;
-            PluginManager.ApplyLayout();
+            // Grasshopper editor has shown, ribbon is populated.
+            // We apply our layout slightly delayed to ensure all 3rd party plugins finished injecting tabs.
+            System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+            timer.Interval = 500; // 500ms delay
+            timer.Tick += (s, args) =>
+            {
+                timer.Stop();
+                timer.Dispose();
+                PluginManager.ApplyLayout();
+            };
+            timer.Start();
         }
     }
 }
