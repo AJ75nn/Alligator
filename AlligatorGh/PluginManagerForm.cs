@@ -14,9 +14,11 @@ namespace AlligatorGh
         private Button _btnReset;
         private Button _btnCheckAll;
         private Button _btnCheckNone;
+        private CheckBox _chkShowIcons;
         private FlowLayoutPanel _listLayout;
 
         private DraggablePluginItem _lastSelected = null;
+        private bool _isBulkUpdating = false;
 
         public PluginManagerForm()
         {
@@ -132,8 +134,12 @@ namespace AlligatorGh
             _btnCheckNone = new Button { Text = "Check None", AutoSize = true, MinimumSize = new Size(80, 30), Padding = new Padding(5) };
             _btnCheckNone.Click += BtnCheckNone_Click;
 
+            _chkShowIcons = new CheckBox { Text = "Show Icons", AutoSize = true, Padding = new Padding(10, 5, 5, 5) };
+            _chkShowIcons.CheckedChanged += ChkShowIcons_CheckedChanged;
+
             bulkLayout.Controls.Add(_btnCheckAll);
             bulkLayout.Controls.Add(_btnCheckNone);
+            bulkLayout.Controls.Add(_chkShowIcons);
 
             mainLayout.Controls.Add(bulkLayout, 0, 0);
 
@@ -217,10 +223,22 @@ namespace AlligatorGh
             _listLayout.Controls.Clear();
             foreach (var item in items)
             {
+                // Find icon from ComponentServer libraries matching the tab name
+                Image icon = null;
+                var lib = Instances.ComponentServer.Libraries.FirstOrDefault(l =>
+                    l.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase));
+
+                if (lib != null)
+                {
+                    icon = lib.Icon;
+                }
+
                 var row = new DraggablePluginItem
                 {
                     PluginName = item.Name,
                     IsVisible = item.Visible,
+                    PluginIcon = icon,
+                    ShowIcon = _chkShowIcons.Checked,
                     Width = _listLayout.ClientSize.Width - 10
                 };
 
@@ -238,7 +256,7 @@ namespace AlligatorGh
                 // If this item's visibility changes and it's selected, we sync it to other selected items.
                 bool isSyncingVisibility = false;
                 row.VisibilityChanged += (s, e) => {
-                    if (isSyncingVisibility) return; // Prevent infinite recursion
+                    if (isSyncingVisibility || _isBulkUpdating) return; // Prevent infinite recursion or UI lockup during mass check
 
                     if (row.IsSelected)
                     {
@@ -275,19 +293,47 @@ namespace AlligatorGh
 
         private void BtnCheckAll_Click(object sender, EventArgs e)
         {
-            var itemsToUpdate = GetTargetItems();
-            foreach (var item in itemsToUpdate)
+            _isBulkUpdating = true;
+
+            // Specifically requested to check all items regardless of selection
+            foreach (Control ctrl in _listLayout.Controls)
             {
-                item.IsVisible = true;
+                if (ctrl is DraggablePluginItem item)
+                {
+                    item.IsVisible = true;
+                }
             }
+
+            _isBulkUpdating = false;
+            ApplyLivePreview();
         }
 
         private void BtnCheckNone_Click(object sender, EventArgs e)
         {
-            var itemsToUpdate = GetTargetItems();
-            foreach (var item in itemsToUpdate)
+            _isBulkUpdating = true;
+
+            // Specifically requested to uncheck all items regardless of selection
+            foreach (Control ctrl in _listLayout.Controls)
             {
-                item.IsVisible = false;
+                if (ctrl is DraggablePluginItem item)
+                {
+                    item.IsVisible = false;
+                }
+            }
+
+            _isBulkUpdating = false;
+            ApplyLivePreview();
+        }
+
+        private void ChkShowIcons_CheckedChanged(object sender, EventArgs e)
+        {
+            bool show = _chkShowIcons.Checked;
+            foreach (Control ctrl in _listLayout.Controls)
+            {
+                if (ctrl is DraggablePluginItem item)
+                {
+                    item.ShowIcon = show;
+                }
             }
         }
 

@@ -8,8 +8,10 @@ namespace AlligatorGh
     {
         private Label _lblHandle;
         private CheckBox _chkVisible;
+        private PictureBox _picIcon;
         private Label _lblName;
         private bool _isSelected;
+        private bool _showIcon = false;
 
         public event EventHandler SelectionChanged;
         public event MouseEventHandler HandleMouseDown;
@@ -25,6 +27,25 @@ namespace AlligatorGh
         {
             get => _chkVisible.Checked;
             set => _chkVisible.Checked = value;
+        }
+
+        public Image PluginIcon
+        {
+            get => _picIcon.Image;
+            set => _picIcon.Image = value;
+        }
+
+        public bool ShowIcon
+        {
+            get => _showIcon;
+            set
+            {
+                if (_showIcon != value)
+                {
+                    _showIcon = value;
+                    _picIcon.Visible = value;
+                }
+            }
         }
 
         public bool IsSelected
@@ -57,13 +78,14 @@ namespace AlligatorGh
             var table = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 3,
+                ColumnCount = 4,
                 RowCount = 1,
                 Margin = new Padding(0),
                 Padding = new Padding(0),
             };
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
             _lblHandle = new Label
@@ -83,6 +105,16 @@ namespace AlligatorGh
                 Padding = new Padding(5, 0, 0, 0)
             };
 
+            _picIcon = new PictureBox
+            {
+                Dock = DockStyle.Fill,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Width = 24,
+                Height = 24,
+                Margin = new Padding(3),
+                Visible = false // Default off until globally toggled
+            };
+
             _lblName = new Label
             {
                 Dock = DockStyle.Fill,
@@ -98,10 +130,12 @@ namespace AlligatorGh
             this.Click += OnItemClick;
             table.Click += OnItemClick;
             _lblName.Click += OnItemClick;
+            _picIcon.Click += OnItemClick;
 
             table.Controls.Add(_lblHandle, 0, 0);
             table.Controls.Add(_chkVisible, 1, 0);
-            table.Controls.Add(_lblName, 2, 0);
+            table.Controls.Add(_picIcon, 2, 0);
+            table.Controls.Add(_lblName, 3, 0);
 
             this.Controls.Add(table);
         }
