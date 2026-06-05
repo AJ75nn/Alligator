@@ -8,11 +8,138 @@ using Grasshopper.GUI.Ribbon;
 
 namespace AlligatorGh
 {
+    public class DragDropCheckedListBox : CheckedListBox
+    {
+        private int _draggedIndex = -1;
+        private int _hoveredIndex = -1;
+        private bool _isDragging = false;
+        private Point _dragStartPoint;
+
+        public DragDropCheckedListBox()
+        {
+            this.DoubleBuffered = true;
+            this.AllowDrop = true;
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if (this.Items.Count == 0) return;
+
+            int index = this.IndexFromPoint(e.Location);
+            if (index != ListBox.NoMatches)
+            {
+                // Check if click is on the checkbox part. Usually checkbox is around 16px wide at the start.
+                // Or let standard behavior toggle it if we don't start dragging immediately.
+                _draggedIndex = index;
+                _dragStartPoint = e.Location;
+                _isDragging = false;
+            }
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            if (e.Button == MouseButtons.Left && _draggedIndex != -1)
+            {
+                if (!_isDragging)
+                {
+                    // threshold to start drag
+                    if (Math.Abs(e.Y - _dragStartPoint.Y) > 5 || Math.Abs(e.X - _dragStartPoint.X) > 5)
+                    {
+                        _isDragging = true;
+                    }
+                }
+
+                if (_isDragging)
+                {
+                    int index = this.IndexFromPoint(e.Location);
+                    if (index == ListBox.NoMatches)
+                    {
+                        if (e.Y > this.GetItemRectangle(this.Items.Count - 1).Bottom)
+                            index = this.Items.Count - 1;
+                        else
+                            index = 0;
+                    }
+
+                    if (index != _hoveredIndex)
+                    {
+                        _hoveredIndex = index;
+                        this.Invalidate(); // trigger redraw to show drop line
+                    }
+                }
+            }
+            else
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            if (_isDragging && _draggedIndex != -1 && _hoveredIndex != -1 && _draggedIndex != _hoveredIndex)
+            {
+                // perform swap or insert
+                var item = this.Items[_draggedIndex];
+                bool isChecked = this.GetItemChecked(_draggedIndex);
+
+                this.Items.RemoveAt(_draggedIndex);
+                this.Items.Insert(_hoveredIndex, item);
+                this.SetItemChecked(_hoveredIndex, isChecked);
+                this.SelectedIndex = _hoveredIndex;
+            }
+
+            _isDragging = false;
+            _draggedIndex = -1;
+            _hoveredIndex = -1;
+            this.Invalidate();
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            if (_isDragging)
+            {
+                _isDragging = false;
+                _draggedIndex = -1;
+                _hoveredIndex = -1;
+                this.Invalidate();
+            }
+        }
+
+        // To draw custom items and drag handle, we would need DrawMode = DrawMode.OwnerDrawFixed,
+        // but CheckedListBox doesn't support OwnerDrawFixed properly without losing native checkboxes.
+        // So we will stick to standard drawing but draw a line overlay during drag.
+
+        private const int WM_PAINT = 0x000F;
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (m.Msg == WM_PAINT)
+            {
+                if (_isDragging && _hoveredIndex != -1)
+                {
+                    using (Graphics g = Graphics.FromHwnd(this.Handle))
+                    {
+                        Rectangle rect = this.GetItemRectangle(_hoveredIndex);
+                        bool insertBelow = _hoveredIndex > _draggedIndex;
+
+                        int y = insertBelow ? rect.Bottom : rect.Top;
+
+                        using (Pen p = new Pen(Color.Black, 2))
+                        {
+                            g.DrawLine(p, rect.Left, y, rect.Right, y);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public class PluginManagerForm : Form
     {
-        private CheckedListBox _checkedListBox;
-        private Button _btnUp;
-        private Button _btnDown;
+        private DragDropCheckedListBox _checkedListBox;
         private Button _btnSave;
         private Button _btnCancel;
         private Button _btnReset;
@@ -56,32 +183,13 @@ namespace AlligatorGh
             listLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             listLayout.Margin = new Padding(0);
 
-            _checkedListBox = new CheckedListBox();
+            _checkedListBox = new DragDropCheckedListBox();
             _checkedListBox.Dock = DockStyle.Fill;
             _checkedListBox.CheckOnClick = true;
             _checkedListBox.IntegralHeight = false;
             listLayout.Controls.Add(_checkedListBox, 0, 0);
 
-            var btnLayout = new FlowLayoutPanel();
-            btnLayout.Dock = DockStyle.Fill;
-            btnLayout.FlowDirection = FlowDirection.TopDown;
-            btnLayout.AutoSize = true;
-            btnLayout.WrapContents = false;
-            btnLayout.Padding = new Padding(10, 0, 0, 0);
-
-            _btnUp = new Button();
-            _btnUp.Text = "▲ Up";
-            _btnUp.AutoSize = true;
-            _btnUp.Click += BtnUp_Click;
-
-            _btnDown = new Button();
-            _btnDown.Text = "▼ Down";
-            _btnDown.AutoSize = true;
-            _btnDown.Click += BtnDown_Click;
-
-            btnLayout.Controls.Add(_btnUp);
-            btnLayout.Controls.Add(_btnDown);
-            listLayout.Controls.Add(btnLayout, 1, 0);
+            // Removing the Up/Down buttons layout as requested
 
             mainLayout.Controls.Add(listLayout, 0, 1);
 
@@ -166,41 +274,6 @@ namespace AlligatorGh
             {
                 _checkedListBox.Items.Add(item.Name, item.Visible);
             }
-        }
-
-        private void BtnUp_Click(object sender, EventArgs e)
-        {
-            if (_checkedListBox.SelectedIndex > 0)
-            {
-                int newIndex = _checkedListBox.SelectedIndex - 1;
-                SwapItems(_checkedListBox.SelectedIndex, newIndex);
-                _checkedListBox.SelectedIndex = newIndex;
-            }
-        }
-
-        private void BtnDown_Click(object sender, EventArgs e)
-        {
-            if (_checkedListBox.SelectedIndex >= 0 && _checkedListBox.SelectedIndex < _checkedListBox.Items.Count - 1)
-            {
-                int newIndex = _checkedListBox.SelectedIndex + 1;
-                SwapItems(_checkedListBox.SelectedIndex, newIndex);
-                _checkedListBox.SelectedIndex = newIndex;
-            }
-        }
-
-        private void SwapItems(int index1, int index2)
-        {
-            var item1 = _checkedListBox.Items[index1];
-            bool check1 = _checkedListBox.GetItemChecked(index1);
-
-            var item2 = _checkedListBox.Items[index2];
-            bool check2 = _checkedListBox.GetItemChecked(index2);
-
-            _checkedListBox.Items[index1] = item2;
-            _checkedListBox.SetItemChecked(index1, check2);
-
-            _checkedListBox.Items[index2] = item1;
-            _checkedListBox.SetItemChecked(index2, check1);
         }
 
         private void BtnSave_Click(object sender, EventArgs e)
