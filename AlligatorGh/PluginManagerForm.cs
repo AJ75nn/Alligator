@@ -20,6 +20,7 @@ namespace AlligatorGh
 
         private DraggablePluginItem _lastSelected = null;
         private bool _isBulkUpdating = false;
+        private bool _saved = false;
 
         public PluginManagerForm()
         {
@@ -564,8 +565,19 @@ namespace AlligatorGh
             this.Close();
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (!_saved)
+            {
+                // Revert to saved settings
+                PluginManager.ApplyLayout();
+            }
+            base.OnFormClosing(e);
+        }
+
         private void BtnSave_Click(object sender, EventArgs e)
         {
+            _saved = true;
             var newSettings = new List<PluginTabSettings>();
             for (int i = 0; i < _listLayout.Controls.Count; i++)
             {
@@ -590,6 +602,7 @@ namespace AlligatorGh
             var result = MessageBox.Show("Are you sure you want to reset the ribbon tabs to their native Grasshopper order?", "Reset Ribbon", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
+                _saved = true;
                 PluginManagerSettings.SaveSettings(new List<PluginTabSettings>());
                 PluginManager.ApplyLayout();
                 this.Close();
