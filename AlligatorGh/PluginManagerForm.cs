@@ -145,31 +145,28 @@ namespace AlligatorGh
 
             var mainLayout = new TableLayoutPanel();
             mainLayout.Dock = DockStyle.Fill;
-            mainLayout.RowCount = 5;
+            mainLayout.RowCount = 4;
             mainLayout.ColumnCount = 1;
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Title
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Top buttons
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f)); // List
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Summary Footer
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Bottom buttons
             mainLayout.Padding = new Padding(20);
 
-            // Title
-            var lblTitle = new Label
-            {
-                Text = "Alligator Plugin Manager",
-                Font = new Font("Segoe UI", 18, FontStyle.Regular),
-                AutoSize = true,
-                Margin = new Padding(0, 0, 0, 20)
-            };
-            mainLayout.Controls.Add(lblTitle, 0, 0);
-
             // Bulk actions layout
-            var bulkLayout = new FlowLayoutPanel();
+            var bulkLayout = new TableLayoutPanel();
             bulkLayout.Dock = DockStyle.Fill;
-            bulkLayout.FlowDirection = FlowDirection.LeftToRight;
+            bulkLayout.ColumnCount = 2;
+            bulkLayout.RowCount = 1;
+            bulkLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            bulkLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             bulkLayout.AutoSize = true;
             bulkLayout.Margin = new Padding(0, 0, 0, 20);
+
+            var leftButtons = new FlowLayoutPanel();
+            leftButtons.FlowDirection = FlowDirection.LeftToRight;
+            leftButtons.AutoSize = true;
+            leftButtons.Dock = DockStyle.Fill;
 
             _btnCheckAll = new Button { Text = "Check All", AutoSize = true, MinimumSize = new Size(80, 30), Padding = new Padding(5) };
             _btnCheckAll.Click += BtnCheckAll_Click;
@@ -177,14 +174,16 @@ namespace AlligatorGh
             _btnCheckNone = new Button { Text = "Check None", AutoSize = true, MinimumSize = new Size(80, 30), Padding = new Padding(5) };
             _btnCheckNone.Click += BtnCheckNone_Click;
 
-            _chkShowIcons = new CheckBox { Text = "Show Icons", AutoSize = true, Padding = new Padding(10, 5, 5, 5) };
+            leftButtons.Controls.Add(_btnCheckAll);
+            leftButtons.Controls.Add(_btnCheckNone);
+
+            _chkShowIcons = new CheckBox { Text = "Show Icons", AutoSize = true, Padding = new Padding(10, 5, 5, 5), Checked = true, Anchor = AnchorStyles.Right };
             _chkShowIcons.CheckedChanged += ChkShowIcons_CheckedChanged;
 
-            bulkLayout.Controls.Add(_btnCheckAll);
-            bulkLayout.Controls.Add(_btnCheckNone);
-            bulkLayout.Controls.Add(_chkShowIcons);
+            bulkLayout.Controls.Add(leftButtons, 0, 0);
+            bulkLayout.Controls.Add(_chkShowIcons, 1, 0);
 
-            mainLayout.Controls.Add(bulkLayout, 0, 1);
+            mainLayout.Controls.Add(bulkLayout, 0, 0);
 
 
 
@@ -197,25 +196,36 @@ namespace AlligatorGh
             _listLayout.BackColor = Color.White;
             _listLayout.BorderStyle = BorderStyle.FixedSingle;
 
-            mainLayout.Controls.Add(_listLayout, 0, 2);
+            mainLayout.Controls.Add(_listLayout, 0, 1);
 
             // Summary
             _lblSummary = new Label
             {
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Font = new Font("Segoe UI", 9, FontStyle.Regular),
                 AutoSize = true,
                 Margin = new Padding(0, 20, 0, 20)
             };
-            mainLayout.Controls.Add(_lblSummary, 0, 3);
+            mainLayout.Controls.Add(_lblSummary, 0, 2);
 
             // Bottom buttons layout
-            var bottomLayout = new FlowLayoutPanel();
+            var bottomLayout = new TableLayoutPanel();
             bottomLayout.Dock = DockStyle.Fill;
-            bottomLayout.FlowDirection = FlowDirection.RightToLeft;
+            bottomLayout.ColumnCount = 2;
+            bottomLayout.RowCount = 1;
+            bottomLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            bottomLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             bottomLayout.AutoSize = true;
             bottomLayout.Margin = new Padding(0, 10, 0, 0);
+
+            _btnReset = new Button { Text = "Reset to Default", AutoSize = true, MinimumSize = new Size(100, 30), Padding = new Padding(5), Anchor = AnchorStyles.Left };
+            _btnReset.Click += BtnReset_Click;
+
+            var rightButtons = new FlowLayoutPanel();
+            rightButtons.FlowDirection = FlowDirection.RightToLeft;
+            rightButtons.AutoSize = true;
+            rightButtons.Dock = DockStyle.Fill;
 
             _btnSave = new Button { Text = "Save && Apply", AutoSize = true, MinimumSize = new Size(100, 30), Padding = new Padding(5) };
             _btnSave.Click += BtnSave_Click;
@@ -223,14 +233,13 @@ namespace AlligatorGh
             _btnCancel = new Button { Text = "Cancel", AutoSize = true, MinimumSize = new Size(80, 30), Padding = new Padding(5) };
             _btnCancel.Click += BtnCancel_Click;
 
-            _btnReset = new Button { Text = "Reset to Default", AutoSize = true, MinimumSize = new Size(100, 30), Padding = new Padding(5) };
-            _btnReset.Click += BtnReset_Click;
+            rightButtons.Controls.Add(_btnSave);
+            rightButtons.Controls.Add(_btnCancel);
 
-            bottomLayout.Controls.Add(_btnSave);
-            bottomLayout.Controls.Add(_btnCancel);
-            bottomLayout.Controls.Add(_btnReset);
+            bottomLayout.Controls.Add(_btnReset, 0, 0);
+            bottomLayout.Controls.Add(rightButtons, 1, 0);
 
-            mainLayout.Controls.Add(bottomLayout, 0, 4);
+            mainLayout.Controls.Add(bottomLayout, 0, 3);
 
             this.Controls.Add(mainLayout);
         }
