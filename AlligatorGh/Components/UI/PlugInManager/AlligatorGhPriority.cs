@@ -24,28 +24,53 @@ namespace AlligatorGh.Components.UI.PlugInManager
             if (documentEditor == null)
                 return;
 
-            ToolStripItem[] displayMenuArr = documentEditor.MainMenuStrip.Items.Find("mnuDisplay", false);
-            if (displayMenuArr.Length == 0)
+            // Find or create "Alligator" main menu
+            ToolStripItem[] alligatorMenuArr = documentEditor.MainMenuStrip.Items.Find("mnuAlligator", false);
+            ToolStripMenuItem alligatorMenu;
+            if (alligatorMenuArr.Length == 0)
+            {
+                alligatorMenu = new ToolStripMenuItem("Alligator");
+                alligatorMenu.Name = "mnuAlligator";
+                documentEditor.MainMenuStrip.Items.Add(alligatorMenu);
+            }
+            else
+            {
+                alligatorMenu = alligatorMenuArr[0] as ToolStripMenuItem;
+            }
+
+            if (alligatorMenu == null)
                 return;
 
-            ToolStripDropDownItem displayMenu = displayMenuArr[0] as ToolStripDropDownItem;
-            if (displayMenu == null)
+            // Find or create "UI Control" submenu
+            ToolStripItem[] uiControlMenuArr = alligatorMenu.DropDownItems.Find("mnuAlligatorUIControl", false);
+            ToolStripMenuItem uiControlMenu;
+            if (uiControlMenuArr.Length == 0)
+            {
+                uiControlMenu = new ToolStripMenuItem("UI Control");
+                uiControlMenu.Name = "mnuAlligatorUIControl";
+                alligatorMenu.DropDownItems.Add(uiControlMenu);
+            }
+            else
+            {
+                uiControlMenu = uiControlMenuArr[0] as ToolStripMenuItem;
+            }
+
+            if (uiControlMenu == null)
                 return;
 
-            // Check if already exists
-            if (displayMenu.DropDownItems.Find("AlligatorPluginManager", false).Length > 0)
+            // Check if "Plugin Manager" already exists
+            if (uiControlMenu.DropDownItems.Find("PluginManager", false).Length > 0)
                 return;
 
-            ToolStripMenuItem managerMenuItem = new ToolStripMenuItem("Alligator Plugin Manager");
-            managerMenuItem.Name = "AlligatorPluginManager";
+            ToolStripMenuItem managerMenuItem = new ToolStripMenuItem("Plugin Manager");
+            managerMenuItem.Name = "PluginManager";
             managerMenuItem.Click += (s, e) =>
             {
                 PluginManagerFrm form = new PluginManagerFrm();
                 form.Show(documentEditor);
             };
 
-            // Insert near the top, after standard GH options
-            displayMenu.DropDownItems.Insert(3, managerMenuItem);
+            uiControlMenu.DropDownItems.Add(managerMenuItem);
 
             // Wait for the document editor to fully load and show
             documentEditor.Shown += DocumentEditor_Shown;
