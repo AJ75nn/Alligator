@@ -16,6 +16,7 @@ namespace AlligatorGh
         private Button _btnCheckNone;
         private CheckBox _chkShowIcons;
         private FlowLayoutPanel _listLayout;
+        private Label _lblSummary;
 
         private DraggablePluginItem _lastSelected = null;
         private bool _isBulkUpdating = false;
@@ -102,24 +103,67 @@ namespace AlligatorGh
 
             // Temporarily apply to layout but DO NOT save to disk yet
             PluginManager.ApplyLayoutPreview(newSettings);
+
+            UpdateSummaryFooter();
+        }
+
+        private void UpdateSummaryFooter()
+        {
+            int totalTabs = _listLayout.Controls.Count;
+            int natives = 0;
+            int plugins = 0;
+            int visible = 0;
+            int hidden = 0;
+
+            foreach (Control ctrl in _listLayout.Controls)
+            {
+                if (ctrl is DraggablePluginItem item)
+                {
+                    if (item.IsVisible) visible++;
+                    else hidden++;
+
+                    // Simple heuristic for native tabs: usually have fewer components or specific names
+                    // However, actual native detection is tricky. Let's use a known list or assume based on icons if needed.
+                    // For now, let's look for standard Grasshopper categories:
+                    string[] nativeCats = { "Params", "Maths", "Sets", "Vector", "Curve", "Surface", "Mesh", "Intersect", "Transform", "Display" };
+                    if (nativeCats.Contains(item.PluginName)) natives++;
+                    else plugins++;
+                }
+            }
+
+            _lblSummary.Text = $"Total Tabs : {totalTabs}    Natives : {natives}    Installed Plugins : {plugins}    Visible : {visible}    Hidden : {hidden}";
         }
 
         private void InitializeComponent()
         {
             this.Text = "Alligator Plugin Manager";
-            this.Size = new Size(400, 600);
+            this.Size = new Size(600, 800);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.SizableToolWindow;
-            this.MinimumSize = new Size(300, 400);
+            this.MinimumSize = new Size(500, 600);
+            this.BackColor = Color.WhiteSmoke;
 
             var mainLayout = new TableLayoutPanel();
             mainLayout.Dock = DockStyle.Fill;
-            mainLayout.RowCount = 4;
+            mainLayout.RowCount = 6;
             mainLayout.ColumnCount = 1;
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Title
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Top buttons
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Headers
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f)); // List
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Summary Footer
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Bottom buttons
             mainLayout.Padding = new Padding(10);
+
+            // Title
+            var lblTitle = new Label
+            {
+                Text = "Alligator Plugin Manager",
+                Font = new Font("Arial", 14, FontStyle.Regular),
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 10)
+            };
+            mainLayout.Controls.Add(lblTitle, 0, 0);
 
             // Bulk actions layout
             var bulkLayout = new FlowLayoutPanel();
@@ -141,7 +185,37 @@ namespace AlligatorGh
             bulkLayout.Controls.Add(_btnCheckNone);
             bulkLayout.Controls.Add(_chkShowIcons);
 
-            mainLayout.Controls.Add(bulkLayout, 0, 0);
+            mainLayout.Controls.Add(bulkLayout, 0, 1);
+
+            // Headers
+            var headerTable = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 6,
+                RowCount = 1,
+                Margin = new Padding(0, 10, 0, 0),
+                Height = 30,
+                CellBorderStyle = TableLayoutPanelCellBorderStyle.Single
+            };
+            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
+            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
+            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
+            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
+            headerTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
+
+            var lblVis = new Label { Text = "Visibility", Font = new Font("Arial", 9, FontStyle.Bold), TextAlign = ContentAlignment.BottomCenter, Dock = DockStyle.Fill };
+            var lblTab = new Label { Text = "Tab Name", Font = new Font("Arial", 9, FontStyle.Bold), TextAlign = ContentAlignment.BottomLeft, Dock = DockStyle.Fill };
+            var lblCat = new Label { Text = "Categories", Font = new Font("Arial", 9, FontStyle.Bold), TextAlign = ContentAlignment.BottomCenter, Dock = DockStyle.Fill };
+            var lblComp = new Label { Text = "Components", Font = new Font("Arial", 9, FontStyle.Bold), TextAlign = ContentAlignment.BottomCenter, Dock = DockStyle.Fill };
+
+            headerTable.Controls.Add(lblVis, 1, 0);
+            headerTable.SetColumnSpan(lblVis, 2);
+            headerTable.Controls.Add(lblTab, 3, 0);
+            headerTable.Controls.Add(lblCat, 4, 0);
+            headerTable.Controls.Add(lblComp, 5, 0);
+
+            mainLayout.Controls.Add(headerTable, 0, 2);
 
             // Item list layout
             _listLayout = new FlowLayoutPanel();
@@ -152,7 +226,18 @@ namespace AlligatorGh
             _listLayout.BackColor = Color.White;
             _listLayout.BorderStyle = BorderStyle.FixedSingle;
 
-            mainLayout.Controls.Add(_listLayout, 0, 1);
+            mainLayout.Controls.Add(_listLayout, 0, 3);
+
+            // Summary
+            _lblSummary = new Label
+            {
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Arial", 9, FontStyle.Bold),
+                Height = 30,
+                Margin = new Padding(0, 5, 0, 5)
+            };
+            mainLayout.Controls.Add(_lblSummary, 0, 4);
 
             // Bottom buttons layout
             var bottomLayout = new FlowLayoutPanel();
@@ -174,7 +259,7 @@ namespace AlligatorGh
             bottomLayout.Controls.Add(_btnCancel);
             bottomLayout.Controls.Add(_btnReset);
 
-            mainLayout.Controls.Add(bottomLayout, 0, 2);
+            mainLayout.Controls.Add(bottomLayout, 0, 5);
 
             this.Controls.Add(mainLayout);
         }
@@ -271,13 +356,36 @@ namespace AlligatorGh
                     }
                 }
 
+                int catCount = 0;
+                int compCount = 0;
+
+                var ghTab = allTabs.FirstOrDefault(t => t.NameFull == item.Name);
+                if (ghTab != null && ghTab.Panels != null)
+                {
+                    catCount = ghTab.Panels.Count;
+                    foreach (var panel in ghTab.Panels)
+                    {
+                        var buttonsProp = typeof(Grasshopper.GUI.Ribbon.GH_RibbonPanel).GetProperty("Buttons", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                        if (buttonsProp != null)
+                        {
+                            var buttons = buttonsProp.GetValue(panel) as System.Collections.IList;
+                            if (buttons != null)
+                            {
+                                compCount += buttons.Count;
+                            }
+                        }
+                    }
+                }
+
                 var row = new DraggablePluginItem
                 {
                     PluginName = item.Name,
                     IsVisible = item.Visible,
                     PluginIcon = icon,
                     ShowIcon = _chkShowIcons.Checked,
-                    Width = _listLayout.ClientSize.Width - 10
+                    Width = _listLayout.ClientSize.Width - 10,
+                    CategoryCount = catCount,
+                    ComponentCount = compCount
                 };
 
                 row.HandleMouseDown += (s, e) =>
@@ -327,6 +435,8 @@ namespace AlligatorGh
                     ctrl.Width = _listLayout.ClientSize.Width - 10;
                 }
             };
+
+            UpdateSummaryFooter();
         }
 
         private Image CreateSymbolIcon(string symbol)

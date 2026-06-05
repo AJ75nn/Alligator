@@ -10,6 +10,8 @@ namespace AlligatorGh
         private CheckBox _chkVisible;
         private PictureBox _picIcon;
         private Label _lblName;
+        private Label _lblCategoryCount;
+        private Label _lblComponentCount;
         private bool _isSelected;
         private bool _showIcon = false;
 
@@ -64,6 +66,9 @@ namespace AlligatorGh
 
         public CheckBox CheckBox => _chkVisible;
 
+        public int CategoryCount { set { _lblCategoryCount.Text = value.ToString(); } }
+        public int ComponentCount { set { _lblComponentCount.Text = value.ToString(); } }
+
         public DraggablePluginItem()
         {
             InitializeComponent();
@@ -71,22 +76,25 @@ namespace AlligatorGh
 
         private void InitializeComponent()
         {
-            this.Size = new Size(300, 30);
+            this.Size = new Size(500, 40);
             this.BackColor = Color.White;
             this.Margin = new Padding(0);
 
             var table = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 4,
+                ColumnCount = 6,
                 RowCount = 1,
                 Margin = new Padding(0),
                 Padding = new Padding(0),
+                CellBorderStyle = TableLayoutPanelCellBorderStyle.Single
             };
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
 
             _lblHandle = new Label
             {
@@ -119,7 +127,23 @@ namespace AlligatorGh
             {
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
-                AutoEllipsis = true
+                AutoEllipsis = true,
+                Font = new Font("Arial", 10, FontStyle.Regular),
+                Padding = new Padding(5, 0, 0, 0)
+            };
+
+            _lblCategoryCount = new Label
+            {
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Arial", 9, FontStyle.Bold),
+            };
+
+            _lblComponentCount = new Label
+            {
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Arial", 9, FontStyle.Bold),
             };
 
             // Wire up events
@@ -131,11 +155,15 @@ namespace AlligatorGh
             table.Click += OnItemClick;
             _lblName.Click += OnItemClick;
             _picIcon.Click += OnItemClick;
+            _lblCategoryCount.Click += OnItemClick;
+            _lblComponentCount.Click += OnItemClick;
 
             table.Controls.Add(_lblHandle, 0, 0);
             table.Controls.Add(_chkVisible, 1, 0);
             table.Controls.Add(_picIcon, 2, 0);
             table.Controls.Add(_lblName, 3, 0);
+            table.Controls.Add(_lblCategoryCount, 4, 0);
+            table.Controls.Add(_lblComponentCount, 5, 0);
 
             this.Controls.Add(table);
         }
