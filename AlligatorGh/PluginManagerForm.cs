@@ -228,9 +228,27 @@ namespace AlligatorGh
                 var lib = Instances.ComponentServer.Libraries.FirstOrDefault(l =>
                     l.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase));
 
-                if (lib != null)
+                if (lib != null && lib.Icon != null)
                 {
                     icon = lib.Icon;
+                }
+                else
+                {
+                    // Fallback to internal grasshopper resources for native tabs (e.g. "Maths" -> "Category_Maths_16x16")
+                    var type = typeof(Instances).Assembly.GetType("Grasshopper.My.Resources.Res_CategoryIcons");
+                    if (type != null)
+                    {
+                        var prop = type.GetProperty($"Category_{item.Name}_16x16", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                        if (prop == null)
+                        {
+                            prop = type.GetProperty($"Category_{item.Name.Replace(" ", "")}_16x16", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                        }
+
+                        if (prop != null)
+                        {
+                            icon = prop.GetValue(null) as Image;
+                        }
+                    }
                 }
 
                 var row = new DraggablePluginItem
