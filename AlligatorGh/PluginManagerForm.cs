@@ -238,15 +238,35 @@ namespace AlligatorGh
                     var type = typeof(Instances).Assembly.GetType("Grasshopper.My.Resources.Res_CategoryIcons");
                     if (type != null)
                     {
-                        var prop = type.GetProperty($"Category_{item.Name}_16x16", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-                        if (prop == null)
+                        string safeName = item.Name.Replace(" ", "");
+
+                        var prop = type.GetProperty($"Category_{safeName}_16x16", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+                        // Fallback 1: Try plural form (e.g., "Surface" -> "Surfaces")
+                        if (prop == null && !safeName.EndsWith("s", StringComparison.OrdinalIgnoreCase))
                         {
-                            prop = type.GetProperty($"Category_{item.Name.Replace(" ", "")}_16x16", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                            prop = type.GetProperty($"Category_{safeName}s_16x16", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                        }
+
+                        // Fallback 2: Try without 's' at the end
+                        if (prop == null && safeName.EndsWith("s", StringComparison.OrdinalIgnoreCase))
+                        {
+                            prop = type.GetProperty($"Category_{safeName.Substring(0, safeName.Length - 1)}_16x16", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
                         }
 
                         if (prop != null)
                         {
                             icon = prop.GetValue(null) as Image;
+                        }
+                    }
+
+                    // Fallback to NameSymbol generation for 3rd-party plugins without library icons
+                    if (icon == null)
+                    {
+                        var tab = allTabs.FirstOrDefault(t => t.NameFull == item.Name);
+                        if (tab != null && !string.IsNullOrEmpty(tab.NameSymbol))
+                        {
+                            icon = CreateSymbolIcon(tab.NameSymbol);
                         }
                     }
                 }
@@ -307,6 +327,29 @@ namespace AlligatorGh
                     ctrl.Width = _listLayout.ClientSize.Width - 10;
                 }
             };
+        }
+
+        private Image CreateSymbolIcon(string symbol)
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+                // Use default text color for icon drawing (typically black or dark gray)
+                using (var brush = new SolidBrush(Color.Black))
+                using (var font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Bold))
+                {
+                    var sf = new StringFormat
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center
+                    };
+                    g.DrawString(symbol, font, brush, new RectangleF(0, 0, 16, 16), sf);
+                }
+            }
+            return bmp;
         }
 
         private void BtnCheckAll_Click(object sender, EventArgs e)
