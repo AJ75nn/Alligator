@@ -33,8 +33,13 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
             // Create Color Controls for properties
             layoutPanel.Controls.Add(CreateColorSettingControl("Canvas Background", "CustomCanvasBack"));
+            layoutPanel.Controls.Add(CreateColorSettingControl("Canvas Grid", "CustomCanvasGrid"));
+            layoutPanel.Controls.Add(CreateColorSettingControl("Canvas Edge", "CustomCanvasEdge"));
+            layoutPanel.Controls.Add(CreateColorSettingControl("Canvas Shade", "CustomCanvasShade"));
+            layoutPanel.Controls.Add(CreateColorSettingControl("Wire Default Color", "CustomWireDefault"));
             layoutPanel.Controls.Add(CreateColorSettingControl("Wire Selected A Color", "CustomWireSelectedA"));
             layoutPanel.Controls.Add(CreateColorSettingControl("Wire Selected B Color", "CustomWireSelectedB"));
+            layoutPanel.Controls.Add(CreateColorSettingControl("Wire Empty Color", "CustomWireEmpty"));
         }
 
         private void PopulateControls()
