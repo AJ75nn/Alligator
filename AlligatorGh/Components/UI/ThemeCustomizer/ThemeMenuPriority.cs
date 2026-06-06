@@ -1,10 +1,10 @@
 using System;
 using System.Drawing;
+using System.Windows.Forms;
 using Grasshopper;
 using Grasshopper.GUI;
 using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel;
-using System.Windows.Forms;
 
 namespace AlligatorGh.Components.UI.ThemeCustomizer
 {
@@ -24,7 +24,8 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             if (documentEditor == null)
                 return;
 
-            ThemeManager.Initialize();
+            // Pass the editor to Initialize so it can apply WinForms UI skinning immediately
+            ThemeManager.Initialize(documentEditor);
 
             // Find or create "Alligator" main menu
             ToolStripItem[] alligatorMenuArr = documentEditor.MainMenuStrip.Items.Find("mnuAlligator", false);
@@ -70,7 +71,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             defaultMenuItem.Click += (s, e) =>
             {
                 ThemeManager.CurrentBaseTheme = "Default";
-                ThemeManager.ApplyTheme();
+                ThemeManager.ApplyTheme(Instances.DocumentEditor);
                 UpdateThemeCheckmarks();
             };
 
@@ -80,7 +81,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             darkMenuItem.Click += (s, e) =>
             {
                 ThemeManager.CurrentBaseTheme = "Dark";
-                ThemeManager.ApplyTheme();
+                ThemeManager.ApplyTheme(Instances.DocumentEditor);
                 UpdateThemeCheckmarks();
             };
 
@@ -89,8 +90,11 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             customMenuItem.Name = "mnuThemeCustom";
             customMenuItem.Click += (s, e) =>
             {
-                ThemeCustomizerFrm frm = new ThemeCustomizerFrm();
-                frm.Show(documentEditor);
+                // Note: If ThemeCustomizerFrm also updates colors, ensure you update 
+                // those method calls inside the form to pass Instances.DocumentEditor
+                // e.g., ThemeManager.SetCustomColor("Key", color, Instances.DocumentEditor);
+                //ThemeCustomizerFrm frm = new ThemeCustomizerFrm();
+                //frm.Show(documentEditor);
             };
 
             themeMenu.DropDownItems.Add(defaultMenuItem);

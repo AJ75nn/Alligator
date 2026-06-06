@@ -1,7 +1,9 @@
 using System;
 using System.Drawing;
+using System.Windows.Forms;
 using Grasshopper;
 using Grasshopper.GUI.Canvas;
+using Grasshopper.GUI;
 
 namespace AlligatorGh.Components.UI.ThemeCustomizer
 {
@@ -9,7 +11,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
     {
         private static bool _initialized = false;
 
-        // Default theme definitions (Grasshopper Native XML)
+        // Default Canvas Theme (Grasshopper Native XML)
         public static readonly Color DefaultCanvasBack = Color.FromArgb(255, 212, 208, 200);
         public static readonly Color DefaultCanvasGrid = Color.FromArgb(30, 0, 0, 0);
         public static readonly Color DefaultCanvasEdge = Color.FromArgb(255, 0, 0, 0);
@@ -19,7 +21,11 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
         public static readonly Color DefaultWireSelectedB = Color.FromArgb(50, 0, 0, 0);
         public static readonly Color DefaultWireEmpty = Color.FromArgb(180, 255, 60, 0);
 
-        // Dark theme definitions
+        // Default UI Chrome Theme
+        public static readonly Color DefaultUIControlBack = Color.FromArgb(255, 240, 240, 240);
+        public static readonly Color DefaultUIControlText = Color.FromArgb(255, 0, 0, 0);
+
+        // Dark Canvas Theme
         public static readonly Color DarkCanvasBack = Color.FromArgb(255, 34, 41, 51);
         public static readonly Color DarkCanvasGrid = Color.FromArgb(255, 41, 49, 61);
         public static readonly Color DarkCanvasEdge = Color.FromArgb(255, 65, 78, 97);
@@ -29,28 +35,32 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
         public static readonly Color DarkWireSelectedB = Color.FromArgb(255, 70, 207, 150);
         public static readonly Color DarkWireEmpty = Color.FromArgb(255, 255, 206, 150);
 
+        // Dark UI Elements
+        public static readonly Color DarkUIMenuBack = Color.FromArgb(255, 45, 53, 66);
+        public static readonly Color DarkUIMenuText = Color.FromArgb(255, 220, 225, 235);
+        public static readonly Color DarkUIHighlight = Color.FromArgb(255, 70, 145, 207);
+
         public static string CurrentBaseTheme
         {
             get => Instances.Settings.GetValue("Alligator_BaseTheme", "Default");
             set => Instances.Settings.SetValue("Alligator_BaseTheme", value);
         }
 
-        public static void Initialize()
+        public static void Initialize(GH_DocumentEditor editor)
         {
             if (_initialized) return;
 
-            // Load saved settings and apply
-            ApplyTheme();
-
+            ApplyTheme(editor);
             _initialized = true;
         }
 
-        public static void ApplyTheme()
+        public static void ApplyTheme(GH_DocumentEditor editor)
         {
             string baseTheme = CurrentBaseTheme;
+            bool isDark = baseTheme == "Dark";
 
-            // Base properties
-            if (baseTheme == "Dark")
+            // 1. Apply Canvas Properties
+            if (isDark)
             {
                 GH_Skin.canvas_back = DarkCanvasBack;
                 GH_Skin.canvas_grid = DarkCanvasGrid;
@@ -98,25 +108,79 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             Color? customWireEmpty = GetCustomColor("CustomWireEmpty");
             if (customWireEmpty.HasValue) GH_Skin.wire_empty = customWireEmpty.Value;
 
-            // Refresh canvas
+            // 2. Apply UI Chrome Properties
+            ApplyUITheme(editor, isDark);
+
+            // 3. Refresh canvas
             if (Instances.ActiveCanvas != null)
             {
                 Instances.ActiveCanvas.Invalidate();
             }
         }
 
-        public static void SetCustomColor(string key, Color color)
+        private static void ApplyUITheme(GH_DocumentEditor editor, bool isDark)
         {
-            Instances.Settings.SetValue(key, color);
-            ApplyTheme();
+            if (editor == null) return;
+
+            editor.BackColor = isDark ? DarkCanvasBack : DefaultUIControlBack;
+
+            // Execute recursive traversal to style all toolbars, menus, splitters, and panels
+            StyleUIElementsRecursively(editor, isDark);
         }
 
-        public static void ClearCustomColor(string key)
+        /// <summary>
+        /// Recursively searches for and themes ToolStrips, Splitters, and structural Panels.
+        /// </summary>
+        private static void StyleUIElementsRecursively(Control parent, bool isDark)
         {
-            // Grasshopper settings doesn't have a direct "Remove" or "Clear" method,
-            // so we set it to Color.Empty to signify it's cleared.
+            foreach (Control control in parent.Controls)
+            {
+                // 1. ToolStrips (Menus, Toolbars, StatusBars)
+                if (control is ToolStrip toolStrip)
+                {
+                    if (isDark)
+                    {
+                        toolStrip.BackColor = DarkUIMenuBack;
+                        toolStrip.ForeColor = DarkUIMenuText;
+                        toolStrip.Renderer = new AlligatorDarkMenuRenderer();
+                    }
+                    else
+                    {
+                        toolStrip.BackColor = DefaultUIControlBack;
+                        toolStrip.ForeColor = DefaultUIControlText;
+                        toolStrip.RenderMode = ToolStripRenderMode.ManagerRenderMode;
+                    }
+                }
+                // 2. Splitters (The horizontal resize bar beneath the ribbon)
+                else if (control is Splitter splitter)
+                {
+                    // Using CanvasEdge provides a crisp, subtle separator line in dark mode
+                    splitter.BackColor = isDark ? DarkCanvasEdge : DefaultUIControlBack;
+                }
+                // 3. Structural Panels (These containers often cause the light padding frames)
+                else if (control is Panel)
+                {
+                    control.BackColor = isDark ? DarkCanvasBack : DefaultUIControlBack;
+                }
+
+                // Recurse into child containers
+                if (control.HasChildren)
+                {
+                    StyleUIElementsRecursively(control, isDark);
+                }
+            }
+        }
+
+        public static void SetCustomColor(string key, Color color, GH_DocumentEditor editor)
+        {
+            Instances.Settings.SetValue(key, color);
+            ApplyTheme(editor);
+        }
+
+        public static void ClearCustomColor(string key, GH_DocumentEditor editor)
+        {
             Instances.Settings.SetValue(key, Color.Empty);
-            ApplyTheme();
+            ApplyTheme(editor);
         }
 
         public static Color? GetCustomColor(string key)
@@ -141,5 +205,88 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
             return Color.Empty;
         }
+    }
+
+    /// <summary>
+    /// Custom Renderer handling standard WinForms Menu and Toolbar styling for Dark Mode.
+    /// Aggressively strips out legacy 3D highlights for a modern, flat UI.
+    /// </summary>
+    public class AlligatorDarkMenuRenderer : ToolStripProfessionalRenderer
+    {
+        public AlligatorDarkMenuRenderer() : base(new AlligatorDarkColorTable())
+        {
+            this.RoundedEdges = false;
+        }
+
+        protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
+        {
+            if (e.Item.Selected)
+            {
+                using (SolidBrush brush = new SolidBrush(ThemeManager.DarkUIHighlight))
+                {
+                    e.Graphics.FillRectangle(brush, e.Item.ContentRectangle);
+                }
+            }
+            else
+            {
+                base.OnRenderMenuItemBackground(e);
+            }
+        }
+
+        protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+        {
+            e.TextColor = ThemeManager.DarkUIMenuText;
+            base.OnRenderItemText(e);
+        }
+
+        protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+        {
+            // Specifically DO NOT call base.OnRenderToolStripBorder(e).
+            // WinForms hardcodes a 1px white highlight line here that ignores ColorTables.
+            // By overriding it, we enforce a perfectly flat UI.
+
+            Rectangle bounds = new Rectangle(0, 0, e.ToolStrip.Width, e.ToolStrip.Height);
+            using (Pen borderPen = new Pen(ThemeManager.DarkCanvasEdge))
+            {
+                // Draw a simple, subtle 1px flat edge at the bottom of the toolbar
+                e.Graphics.DrawLine(borderPen, 0, bounds.Height - 1, bounds.Width, bounds.Height - 1);
+            }
+        }
+
+        protected override void OnRenderStatusStripSizingGrip(ToolStripRenderEventArgs e)
+        {
+            // Suppress the default dotted light-grey sizing grip in the bottom right corner
+            // to maintain a clean visual frame.
+        }
+    }
+
+    /// <summary>
+    /// Color table defining specific overrides for ToolStrip menus, toolbars, and buttons.
+    /// </summary>
+    public class AlligatorDarkColorTable : ProfessionalColorTable
+    {
+        // Menu Elements
+        public override Color ToolStripDropDownBackground => ThemeManager.DarkUIMenuBack;
+        public override Color ImageMarginGradientBegin => ThemeManager.DarkUIMenuBack;
+        public override Color ImageMarginGradientMiddle => ThemeManager.DarkUIMenuBack;
+        public override Color ImageMarginGradientEnd => ThemeManager.DarkUIMenuBack;
+        public override Color MenuBorder => ThemeManager.DarkCanvasEdge;
+        public override Color MenuItemBorder => ThemeManager.DarkUIHighlight;
+        public override Color MenuItemSelected => ThemeManager.DarkUIHighlight;
+        public override Color MenuStripGradientBegin => ThemeManager.DarkUIMenuBack;
+        public override Color MenuStripGradientEnd => ThemeManager.DarkUIMenuBack;
+
+        // Standard Toolbar Elements (Canvas Toolbar & Status Bar)
+        public override Color ToolStripBorder => ThemeManager.DarkCanvasEdge;
+        public override Color ToolStripGradientBegin => ThemeManager.DarkUIMenuBack;
+        public override Color ToolStripGradientMiddle => ThemeManager.DarkUIMenuBack;
+        public override Color ToolStripGradientEnd => ThemeManager.DarkUIMenuBack;
+        public override Color ToolStripPanelGradientBegin => ThemeManager.DarkUIMenuBack;
+        public override Color ToolStripPanelGradientEnd => ThemeManager.DarkUIMenuBack;
+        public override Color ButtonSelectedHighlight => ThemeManager.DarkUIHighlight;
+        public override Color ButtonSelectedBorder => ThemeManager.DarkUIHighlight;
+        public override Color ButtonPressedHighlight => ThemeManager.DarkCanvasEdge;
+        public override Color ButtonPressedBorder => ThemeManager.DarkCanvasEdge;
+        public override Color ButtonCheckedHighlight => ThemeManager.DarkCanvasEdge;
     }
 }
