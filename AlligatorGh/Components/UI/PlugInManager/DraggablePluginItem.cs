@@ -8,6 +8,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
     {
         private Label _lblHandle;
         private CheckBox _chkVisible;
+        private CheckBox _chkLoad;
         private PictureBox _picIcon;
         private Label _lblName;
         private bool _isSelected;
@@ -22,6 +23,20 @@ namespace AlligatorGh.Components.UI.PlugInManager
             get => _lblName.Text;
             set => _lblName.Text = value;
         }
+
+        public bool IsLoaded
+        {
+            get => _chkLoad.Checked;
+            set => _chkLoad.Checked = value;
+        }
+
+        public bool LoadEnabled
+        {
+            get => _chkLoad.Enabled;
+            set => _chkLoad.Enabled = value;
+        }
+
+        public string AssemblyLocation { get; set; }
 
         public bool IsVisible
         {
@@ -78,7 +93,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
             var table = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 4,
+                ColumnCount = 5,
                 RowCount = 1,
                 Margin = new Padding(0),
                 Padding = new Padding(0)
@@ -86,6 +101,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 36f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40f));
 
             _lblHandle = new Label
@@ -97,6 +113,15 @@ namespace AlligatorGh.Components.UI.PlugInManager
                 Cursor = Cursors.SizeAll
             };
 
+
+            _chkLoad = new CheckBox
+            {
+                Dock = DockStyle.Fill,
+                AutoSize = true,
+                Text = "", // CheckBox has no text, so clicking it strictly toggles
+                Padding = new Padding(5, 0, 0, 0),
+                Checked = true // default
+            };
             _chkVisible = new CheckBox
             {
                 Dock = DockStyle.Fill,
@@ -127,6 +152,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
             // Wire up events
             _lblHandle.MouseDown += LblHandle_MouseDown;
             _chkVisible.CheckedChanged += ChkVisible_CheckedChanged;
+            _chkLoad.CheckedChanged += ChkLoad_CheckedChanged;
 
             // Allow selection by clicking the background or the text label
             this.Click += OnItemClick;
@@ -137,7 +163,8 @@ namespace AlligatorGh.Components.UI.PlugInManager
             table.Controls.Add(_lblHandle, 0, 0);
             table.Controls.Add(_picIcon, 1, 0);
             table.Controls.Add(_lblName, 2, 0);
-            table.Controls.Add(_chkVisible, 3, 0);
+            table.Controls.Add(_chkLoad, 3, 0);
+            table.Controls.Add(_chkVisible, 4, 0);
 
             this.Controls.Add(table);
         }
@@ -147,6 +174,19 @@ namespace AlligatorGh.Components.UI.PlugInManager
             // Important for allowing parent to intercept dragging smoothly
             _lblHandle.Capture = false;
             HandleMouseDown?.Invoke(this, e);
+        }
+
+
+        private void ChkLoad_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!_chkLoad.Checked)
+            {
+                _chkVisible.Enabled = false;
+            }
+            else
+            {
+                _chkVisible.Enabled = true;
+            }
         }
 
         private void ChkVisible_CheckedChanged(object sender, EventArgs e)

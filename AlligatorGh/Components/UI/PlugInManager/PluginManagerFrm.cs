@@ -1,4 +1,5 @@
-﻿using Grasshopper;
+using System.IO;
+using Grasshopper;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -247,13 +248,29 @@ namespace AlligatorGh.Components.UI.PlugInManager
                     }
                 }
 
+                string assemblyLocation = null;
+                bool isLoaded = true;
+                bool loadEnabled = false;
+
+                if (lib != null && !string.IsNullOrEmpty(lib.Location) &&
+                    (lib.Location.EndsWith(".gha", StringComparison.OrdinalIgnoreCase) || lib.Location.EndsWith(".rhp", StringComparison.OrdinalIgnoreCase)))
+                {
+                    assemblyLocation = lib.Location;
+                    loadEnabled = true;
+                    string no6Path = System.IO.Path.ChangeExtension(assemblyLocation, ".no6");
+                    isLoaded = !System.IO.File.Exists(no6Path);
+                }
+
                 var row = new DraggablePluginItem
                 {
                     PluginName = item.Name,
                     IsVisible = item.Visible,
                     PluginIcon = icon,
                     ShowIcon = chbIcon.Checked,
-                    Width = flpTabList.ClientSize.Width - 10
+                    Width = flpTabList.ClientSize.Width - 10,
+                    AssemblyLocation = assemblyLocation,
+                    LoadEnabled = loadEnabled,
+                    IsLoaded = isLoaded
                 };
 
                 row.HandleMouseDown += (s, e) =>
@@ -294,6 +311,71 @@ namespace AlligatorGh.Components.UI.PlugInManager
                 WireUpClickRecursive(row);
 
                 flpTabList.Controls.Add(row);
+            }
+
+
+            // Find unloaded plugins (.no6 files)
+            var dirs = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (Grasshopper.Folders.AssemblyFolders != null)
+            {
+                foreach (var folder in Grasshopper.Folders.AssemblyFolders)
+                {
+                    if (System.IO.Directory.Exists(folder.Folder))
+                        dirs.Add(folder.Folder);
+                }
+            }
+            foreach (var l in Instances.ComponentServer.Libraries)
+            {
+                if (!string.IsNullOrEmpty(l.Location))
+                {
+                    var d = System.IO.Path.GetDirectoryName(l.Location);
+                    if (System.IO.Directory.Exists(d))
+                        dirs.Add(d);
+                }
+            }
+
+            var no6Files = new System.Collections.Generic.List<string>();
+            foreach (var d in dirs)
+            {
+                try {
+                    no6Files.AddRange(System.IO.Directory.GetFiles(d, "*.no6"));
+                } catch { }
+            }
+
+            foreach (var no6 in no6Files)
+            {
+                string ghaPath = System.IO.Path.ChangeExtension(no6, ".gha");
+                string pluginName = System.IO.Path.GetFileNameWithoutExtension(no6);
+
+                // If it's already in the flpTabList, skip it
+                if (flpTabList.Controls.OfType<DraggablePluginItem>().Any(r => r.AssemblyLocation != null && r.AssemblyLocation.Equals(ghaPath, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                // Create a new row for this unloaded plugin
+                var rowUnloaded = new DraggablePluginItem
+                {
+                    PluginName = pluginName,
+                    IsVisible = false,
+                    IsLoaded = false,
+                    AssemblyLocation = ghaPath,
+                    PluginIcon = CreateSymbolIcon(pluginName.Length > 0 ? pluginName.Substring(0, 1) : "?"),
+                    ShowIcon = chbIcon.Checked,
+                    LoadEnabled = true,
+                    Width = flpTabList.ClientSize.Width - 10
+                };
+
+                rowUnloaded.HandleMouseDown += (s, e) =>
+                {
+                    if (e.Button == MouseButtons.Left)
+                    {
+                        rowUnloaded.BackColor = Color.LightGray;
+                        rowUnloaded.DoDragDrop(rowUnloaded, DragDropEffects.Move);
+                        rowUnloaded.BackColor = rowUnloaded.IsSelected ? Color.LightBlue : Color.White;
+                    }
+                };
+
+                WireUpClickRecursive(rowUnloaded);
+                flpTabList.Controls.Add(rowUnloaded);
             }
 
             // Handle resize
@@ -463,6 +545,34 @@ namespace AlligatorGh.Components.UI.PlugInManager
             {
                 if (flpTabList.Controls[i] is DraggablePluginItem item)
                 {
+                    // Update .no6 file for loading
+                    if (!string.IsNullOrEmpty(item.AssemblyLocation))
+                    {
+                        string no6Path = System.IO.Path.ChangeExtension(item.AssemblyLocation, ".no6");
+                        try
+                        {
+                            if (!item.IsLoaded)
+                            {
+                                if (!System.IO.File.Exists(no6Path))
+                                {
+                                    System.IO.File.Create(no6Path).Close();
+                                }
+                            }
+                            else
+                            {
+                                if (System.IO.File.Exists(no6Path))
+                                {
+                                    System.IO.File.Delete(no6Path);
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // Ignore access errors silently or log them
+                        }
+                    }
+
+                    // For unloaded plugins, their tabs don't exist in GH, but we might save their visibility state for when they do load
                     newSettings.Add(new PluginTabSettings
                     {
                         Name = item.PluginName,
