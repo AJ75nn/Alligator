@@ -9,11 +9,12 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
     {
         private static bool _initialized = false;
 
-        // Base theme definitions
-        public static readonly Color DefaultCanvasBack = Color.FromArgb(255, 212, 208, 200);
-        public static readonly Color DefaultWireSelectedA = Color.FromArgb(255, 118, 185, 0); // Example
-        public static readonly Color DefaultWireSelectedB = Color.FromArgb(255, 150, 200, 50); // Example
+        // Native Grasshopper original defaults (captured at startup)
+        public static Color NativeCanvasBack;
+        public static Color NativeWireSelectedA;
+        public static Color NativeWireSelectedB;
 
+        // Base theme definitions
         public static readonly Color DarkCanvasBack = Color.FromArgb(255, 45, 45, 48);
         public static readonly Color DarkWireSelectedA = Color.FromArgb(255, 0, 122, 204); // Example
         public static readonly Color DarkWireSelectedB = Color.FromArgb(255, 28, 151, 234); // Example
@@ -27,6 +28,11 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
         public static void Initialize()
         {
             if (_initialized) return;
+
+            // Capture the true native Grasshopper defaults before we override them
+            NativeCanvasBack = GH_Skin.canvas_back;
+            NativeWireSelectedA = GH_Skin.wire_selected_a;
+            NativeWireSelectedB = GH_Skin.wire_selected_b;
 
             // Load saved settings and apply
             ApplyTheme();
@@ -47,9 +53,9 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             }
             else
             {
-                GH_Skin.canvas_back = DefaultCanvasBack;
-                GH_Skin.wire_selected_a = DefaultWireSelectedA;
-                GH_Skin.wire_selected_b = DefaultWireSelectedB;
+                GH_Skin.canvas_back = NativeCanvasBack;
+                GH_Skin.wire_selected_a = NativeWireSelectedA;
+                GH_Skin.wire_selected_b = NativeWireSelectedB;
             }
 
             // Apply custom overrides if they exist
@@ -96,15 +102,15 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
             if (propName == "CustomCanvasBack")
             {
-                return baseTheme == "Dark" ? DarkCanvasBack : DefaultCanvasBack;
+                return baseTheme == "Dark" ? DarkCanvasBack : NativeCanvasBack;
             }
             if (propName == "CustomWireSelectedA")
             {
-                return baseTheme == "Dark" ? DarkWireSelectedA : DefaultWireSelectedA;
+                return baseTheme == "Dark" ? DarkWireSelectedA : NativeWireSelectedA;
             }
             if (propName == "CustomWireSelectedB")
             {
-                return baseTheme == "Dark" ? DarkWireSelectedB : DefaultWireSelectedB;
+                return baseTheme == "Dark" ? DarkWireSelectedB : NativeWireSelectedB;
             }
 
             return Color.Empty;
