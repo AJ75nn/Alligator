@@ -24,10 +24,8 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             if (documentEditor == null)
                 return;
 
-            // Pass the editor to Initialize so it can apply WinForms UI skinning immediately
             ThemeManager.Initialize(documentEditor);
 
-            // Find or create "Alligator" main menu
             ToolStripItem[] alligatorMenuArr = documentEditor.MainMenuStrip.Items.Find("mnuAlligator", false);
             ToolStripMenuItem alligatorMenu;
             if (alligatorMenuArr.Length == 0)
@@ -43,7 +41,6 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
             if (alligatorMenu == null) return;
 
-            // Find or create "Customize UI" submenu
             ToolStripItem[] customizeUIMenuArr = alligatorMenu.DropDownItems.Find("mnuAlligatorCustomizeUI", false);
             ToolStripMenuItem customizeUIMenu;
             if (customizeUIMenuArr.Length == 0)
@@ -57,7 +54,6 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 customizeUIMenu = customizeUIMenuArr[0] as ToolStripMenuItem;
             }
 
-            // Create "Theme" submenu
             if (customizeUIMenu.DropDownItems.Find("mnuAlligatorTheme", false).Length > 0)
                 return;
 
@@ -65,7 +61,6 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             themeMenu.Name = "mnuAlligatorTheme";
             customizeUIMenu.DropDownItems.Add(themeMenu);
 
-            // Default
             ToolStripMenuItem defaultMenuItem = new ToolStripMenuItem("Default");
             defaultMenuItem.Name = "mnuThemeDefault";
             defaultMenuItem.Click += (s, e) =>
@@ -75,7 +70,6 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 UpdateThemeCheckmarks();
             };
 
-            // Dark
             ToolStripMenuItem darkMenuItem = new ToolStripMenuItem("Dark");
             darkMenuItem.Name = "mnuThemeDark";
             darkMenuItem.Click += (s, e) =>
@@ -85,25 +79,65 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 UpdateThemeCheckmarks();
             };
 
-            // Custom
             ToolStripMenuItem customMenuItem = new ToolStripMenuItem("Custom");
             customMenuItem.Name = "mnuThemeCustom";
-            customMenuItem.Click += (s, e) =>
-            {
-                // Note: If ThemeCustomizerFrm also updates colors, ensure you update 
-                // those method calls inside the form to pass Instances.DocumentEditor
-                // e.g., ThemeManager.SetCustomColor("Key", color, Instances.DocumentEditor);
-                //ThemeCustomizerFrm frm = new ThemeCustomizerFrm();
-                //frm.Show(documentEditor);
-            };
+
+            // Build the Custom Dropdown items inline
+            BuildCustomColorMenu(customMenuItem, "Canvas Background", "CustomCanvasBack");
+            BuildCustomColorMenu(customMenuItem, "Canvas Grid", "CustomCanvasGrid");
+            BuildCustomColorMenu(customMenuItem, "Canvas Edge", "CustomCanvasEdge");
+            BuildCustomColorMenu(customMenuItem, "Canvas Shade", "CustomCanvasShade");
+            customMenuItem.DropDownItems.Add(new ToolStripSeparator());
+            BuildCustomColorMenu(customMenuItem, "Wire Default", "CustomWireDefault");
+            BuildCustomColorMenu(customMenuItem, "Wire Selected A", "CustomWireSelectedA");
+            BuildCustomColorMenu(customMenuItem, "Wire Selected B", "CustomWireSelectedB");
+            BuildCustomColorMenu(customMenuItem, "Wire Empty", "CustomWireEmpty");
 
             themeMenu.DropDownItems.Add(defaultMenuItem);
             themeMenu.DropDownItems.Add(darkMenuItem);
             themeMenu.DropDownItems.Add(new ToolStripSeparator());
             themeMenu.DropDownItems.Add(customMenuItem);
 
-            // Wait for the document editor to fully load to show proper checkmarks
             documentEditor.Shown += DocumentEditor_Shown;
+        }
+
+        private void BuildCustomColorMenu(ToolStripMenuItem parent, string displayName, string propertyKey)
+        {
+            ToolStripMenuItem propertyItem = new ToolStripMenuItem(displayName);
+
+            // To properly append the Grasshopper colour picker, we use the GUI utility:
+            // GH_DocumentObject.Menu_AppendColourPicker(parent_menu, value, delegate_for_value_change)
+            // But since we want it inside a nice "Property Name" dropdown, we construct the dropdown
+            // dynamically on opening.
+
+            propertyItem.DropDownOpening += (s, e) => {
+                propertyItem.DropDownItems.Clear();
+
+                Color currentColor = ThemeManager.GetCustomColor(propertyKey) ?? ThemeManager.GetDefaultColorForProperty(propertyKey);
+
+                GH_ColourPicker picker = new GH_ColourPicker();
+                picker.Colour = currentColor;
+
+                picker.ColourChanged += (sender, args) => {
+                    ThemeManager.SetCustomColor(propertyKey, picker.Colour, Instances.DocumentEditor);
+                };
+
+                ToolStripControlHost pickerHost = new ToolStripControlHost(picker);
+                pickerHost.Margin = new Padding(0);
+                pickerHost.Padding = new Padding(0);
+
+                propertyItem.DropDownItems.Add(pickerHost);
+                propertyItem.DropDownItems.Add(new ToolStripSeparator());
+
+                ToolStripMenuItem resetItem = new ToolStripMenuItem("Reset");
+                resetItem.Click += (sender, args) => {
+                    ThemeManager.ClearCustomColor(propertyKey, Instances.DocumentEditor);
+                    propertyItem.DropDown.Close();
+                };
+                propertyItem.DropDownItems.Add(resetItem);
+            };
+
+            parent.DropDownItems.Add(propertyItem);
         }
 
         private void DocumentEditor_Shown(object sender, EventArgs e)
