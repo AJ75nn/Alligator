@@ -65,6 +65,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             defaultMenuItem.Name = "mnuThemeDefault";
             defaultMenuItem.Click += (s, e) =>
             {
+                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
                 ThemeManager.CurrentBaseTheme = "Default";
                 ThemeManager.ApplyTheme(Instances.DocumentEditor);
                 UpdateThemeCheckmarks();
@@ -74,6 +75,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             darkMenuItem.Name = "mnuThemeDark";
             darkMenuItem.Click += (s, e) =>
             {
+                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
                 ThemeManager.CurrentBaseTheme = "Dark";
                 ThemeManager.ApplyTheme(Instances.DocumentEditor);
                 UpdateThemeCheckmarks();
@@ -92,6 +94,12 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             BuildCustomColorMenu(customMenuItem, "Wire Selected A", "CustomWireSelectedA");
             BuildCustomColorMenu(customMenuItem, "Wire Selected B", "CustomWireSelectedB");
             BuildCustomColorMenu(customMenuItem, "Wire Empty", "CustomWireEmpty");
+
+            customMenuItem.DropDownItems.Add(new ToolStripSeparator());
+            BuildCustomColorMenu(customMenuItem, "Ribbon Background", "CustomRibbonBack");
+            BuildCustomColorMenu(customMenuItem, "Ribbon Highlight", "CustomRibbonHighlight");
+            BuildCustomColorMenu(customMenuItem, "Ribbon Text", "CustomRibbonText");
+            BuildCustomNumberMenu(customMenuItem, "Ribbon Font Size", "CustomRibbonFontSize");
 
             themeMenu.DropDownItems.Add(defaultMenuItem);
             themeMenu.DropDownItems.Add(darkMenuItem);
@@ -122,6 +130,39 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 ToolStripMenuItem resetItem = new ToolStripMenuItem("Reset");
                 resetItem.Click += (sender, args) => {
                     ThemeManager.ClearCustomColor(propertyKey, Instances.DocumentEditor);
+                    propertyItem.DropDown.Close();
+                };
+                propertyItem.DropDownItems.Add(resetItem);
+            };
+
+            parent.DropDownItems.Add(propertyItem);
+        }
+
+        private void BuildCustomNumberMenu(ToolStripMenuItem parent, string displayName, string propertyKey)
+        {
+            ToolStripMenuItem propertyItem = new ToolStripMenuItem(displayName);
+
+            // Add a dummy item to ensure the dropdown arrow is shown
+            propertyItem.DropDownItems.Add(new ToolStripMenuItem("..."));
+
+            propertyItem.DropDownOpening += (s, e) => {
+                propertyItem.DropDownItems.Clear();
+
+                int currentFontSize = ThemeManager.GetCustomRibbonFontSize();
+
+                GH_DocumentObject.Menu_AppendTextItem(propertyItem.DropDown, currentFontSize.ToString(), null, (sender, textArgs) => {
+                    if (sender is GH_MenuTextBox txt && int.TryParse(txt.Text, out int size) && size > 0)
+                    {
+                        ThemeManager.SetCustomRibbonFontSize(size);
+                    }
+                }, true, 100, true);
+
+                propertyItem.DropDownItems.Add(new ToolStripSeparator());
+
+                ToolStripMenuItem resetItem = new ToolStripMenuItem("Reset");
+                resetItem.Click += (sender, args) => {
+                    Instances.Settings.SetValue(propertyKey, 0);
+                    ThemeManager.ApplyTheme(Instances.DocumentEditor);
                     propertyItem.DropDown.Close();
                 };
                 propertyItem.DropDownItems.Add(resetItem);
