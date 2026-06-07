@@ -49,6 +49,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<EmbeddedResource Include="Resources\*.png" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Compile Remove="References\**" />
 		<EmbeddedResource Remove="References\**" />
 		<None Remove="References\**" />

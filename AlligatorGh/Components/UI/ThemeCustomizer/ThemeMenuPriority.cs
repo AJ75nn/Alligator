@@ -1,5 +1,7 @@
 using System;
 using System.Drawing;
+using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 using Grasshopper;
 using Grasshopper.GUI;
@@ -10,6 +12,27 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 {
     public class ThemeMenuPriority : GH_AssemblyPriority
     {
+        private static Image _resetImage;
+
+        private static Image GetResetImage()
+        {
+            if (_resetImage == null)
+            {
+                try
+                {
+                    Assembly assembly = Assembly.GetExecutingAssembly();
+                    // Do not wrap in a using statement; the stream must remain open for the lifetime of the GDI+ Image.
+                    Stream stream = assembly.GetManifestResourceStream("AlligatorGh.Resources.reset.png");
+                    if (stream != null)
+                    {
+                        _resetImage = Image.FromStream(stream);
+                    }
+                }
+                catch { }
+            }
+            return _resetImage;
+        }
+
         public override GH_LoadingInstruction PriorityLoad()
         {
             Instances.CanvasCreated += Instances_CanvasCreated;
@@ -116,6 +139,16 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             // Add a dummy item to ensure the dropdown arrow is shown
             propertyItem.DropDownItems.Add(new ToolStripMenuItem("..."));
 
+            bool _isResetting = false;
+
+            propertyItem.DropDown.Closing += (sender, eClosing) => {
+                if (_isResetting)
+                {
+                    eClosing.Cancel = true;
+                    _isResetting = false;
+                }
+            };
+
             propertyItem.DropDownOpening += (s, e) => {
                 propertyItem.DropDownItems.Clear();
 
@@ -128,10 +161,27 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 propertyItem.DropDownItems.Add(new ToolStripSeparator());
 
                 ToolStripMenuItem resetItem = new ToolStripMenuItem("Reset");
-                resetItem.Click += (sender, args) => {
-                    ThemeManager.ClearCustomColor(propertyKey, Instances.DocumentEditor);
-                    propertyItem.DropDown.Close();
+                Image resetImg = GetResetImage();
+                if (resetImg != null)
+                {
+                    resetItem.Image = resetImg;
+                }
+
+                resetItem.MouseEnter += (sender, args) => {
+                    if (resetItem.GetCurrentParent() != null)
+                        resetItem.GetCurrentParent().Cursor = Cursors.Hand;
                 };
+
+                resetItem.MouseLeave += (sender, args) => {
+                    if (resetItem.GetCurrentParent() != null)
+                        resetItem.GetCurrentParent().Cursor = Cursors.Default;
+                };
+
+                resetItem.Click += (sender, args) => {
+                    _isResetting = true;
+                    ThemeManager.ClearCustomColor(propertyKey, Instances.DocumentEditor);
+                };
+
                 propertyItem.DropDownItems.Add(resetItem);
             };
 
@@ -144,6 +194,16 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
             // Add a dummy item to ensure the dropdown arrow is shown
             propertyItem.DropDownItems.Add(new ToolStripMenuItem("..."));
+
+            bool _isResetting = false;
+
+            propertyItem.DropDown.Closing += (sender, eClosing) => {
+                if (_isResetting)
+                {
+                    eClosing.Cancel = true;
+                    _isResetting = false;
+                }
+            };
 
             propertyItem.DropDownOpening += (s, e) => {
                 propertyItem.DropDownItems.Clear();
@@ -160,11 +220,28 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 propertyItem.DropDownItems.Add(new ToolStripSeparator());
 
                 ToolStripMenuItem resetItem = new ToolStripMenuItem("Reset");
+                Image resetImg = GetResetImage();
+                if (resetImg != null)
+                {
+                    resetItem.Image = resetImg;
+                }
+
+                resetItem.MouseEnter += (sender, args) => {
+                    if (resetItem.GetCurrentParent() != null)
+                        resetItem.GetCurrentParent().Cursor = Cursors.Hand;
+                };
+
+                resetItem.MouseLeave += (sender, args) => {
+                    if (resetItem.GetCurrentParent() != null)
+                        resetItem.GetCurrentParent().Cursor = Cursors.Default;
+                };
+
                 resetItem.Click += (sender, args) => {
+                    _isResetting = true;
                     Instances.Settings.SetValue(propertyKey, 0);
                     ThemeManager.ApplyTheme(Instances.DocumentEditor);
-                    propertyItem.DropDown.Close();
                 };
+
                 propertyItem.DropDownItems.Add(resetItem);
             };
 
