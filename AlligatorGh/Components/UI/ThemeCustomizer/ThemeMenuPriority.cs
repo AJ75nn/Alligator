@@ -105,6 +105,9 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
         {
             ToolStripMenuItem propertyItem = new ToolStripMenuItem(displayName);
 
+            // Add a dummy item to ensure the dropdown arrow is shown
+            propertyItem.DropDownItems.Add(new ToolStripMenuItem("..."));
+
             propertyItem.DropDownOpening += (s, e) => {
                 propertyItem.DropDownItems.Clear();
 
