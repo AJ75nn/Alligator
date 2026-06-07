@@ -105,28 +105,15 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
         {
             ToolStripMenuItem propertyItem = new ToolStripMenuItem(displayName);
 
-            // To properly append the Grasshopper colour picker, we use the GUI utility:
-            // GH_DocumentObject.Menu_AppendColourPicker(parent_menu, value, delegate_for_value_change)
-            // But since we want it inside a nice "Property Name" dropdown, we construct the dropdown
-            // dynamically on opening.
-
             propertyItem.DropDownOpening += (s, e) => {
                 propertyItem.DropDownItems.Clear();
 
                 Color currentColor = ThemeManager.GetCustomColor(propertyKey) ?? ThemeManager.GetDefaultColorForProperty(propertyKey);
 
-                GH_ColourPicker picker = new GH_ColourPicker();
-                picker.Colour = currentColor;
+                GH_DocumentObject.Menu_AppendColourPicker(propertyItem.DropDown, currentColor, (sender, args) => {
+                    ThemeManager.SetCustomColor(propertyKey, args.Colour, Instances.DocumentEditor);
+                });
 
-                picker.ColourChanged += (sender, args) => {
-                    ThemeManager.SetCustomColor(propertyKey, picker.Colour, Instances.DocumentEditor);
-                };
-
-                ToolStripControlHost pickerHost = new ToolStripControlHost(picker);
-                pickerHost.Margin = new Padding(0);
-                pickerHost.Padding = new Padding(0);
-
-                propertyItem.DropDownItems.Add(pickerHost);
                 propertyItem.DropDownItems.Add(new ToolStripSeparator());
 
                 ToolStripMenuItem resetItem = new ToolStripMenuItem("Reset");

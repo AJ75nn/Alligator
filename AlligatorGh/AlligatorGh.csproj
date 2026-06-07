@@ -13,6 +13,7 @@
 		<NoWarn>NU1701;NETSDK1086</NoWarn>
 		<LangVersion>latest</LangVersion>
 		<EnableWindowsTargeting>true</EnableWindowsTargeting>
+		<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -25,6 +26,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Grasshopper" Version="8.28.26041.11001" ExcludeAssets="runtime" />
+		<PackageReference Include="System.Resources.Extensions" Version="10.0.8" />
 	</ItemGroup>
 
 	<!-- For Windows only builds -->
@@ -44,6 +46,12 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\AlligatorCore\AlligatorCore.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="References\**" />
+		<EmbeddedResource Remove="References\**" />
+		<None Remove="References\**" />
 	</ItemGroup>
 
 </Project>
