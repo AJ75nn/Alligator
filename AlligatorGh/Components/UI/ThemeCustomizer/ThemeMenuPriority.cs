@@ -1,5 +1,7 @@
 using System;
 using System.Drawing;
+using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 using Grasshopper;
 using Grasshopper.GUI;
@@ -10,6 +12,27 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 {
     public class ThemeMenuPriority : GH_AssemblyPriority
     {
+        private static Image _resetImage;
+
+        private static Image GetResetImage()
+        {
+            if (_resetImage == null)
+            {
+                try
+                {
+                    Assembly assembly = Assembly.GetExecutingAssembly();
+                    // Do not wrap in a using statement; the stream must remain open for the lifetime of the GDI+ Image.
+                    Stream stream = assembly.GetManifestResourceStream("AlligatorGh.Resources.reset.png");
+                    if (stream != null)
+                    {
+                        _resetImage = Image.FromStream(stream);
+                    }
+                }
+                catch { }
+            }
+            return _resetImage;
+        }
+
         public override GH_LoadingInstruction PriorityLoad()
         {
             Instances.CanvasCreated += Instances_CanvasCreated;
@@ -65,6 +88,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             defaultMenuItem.Name = "mnuThemeDefault";
             defaultMenuItem.Click += (s, e) =>
             {
+                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
                 ThemeManager.CurrentBaseTheme = "Default";
                 ThemeManager.ApplyTheme(Instances.DocumentEditor);
                 UpdateThemeCheckmarks();
@@ -74,6 +98,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             darkMenuItem.Name = "mnuThemeDark";
             darkMenuItem.Click += (s, e) =>
             {
+                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
                 ThemeManager.CurrentBaseTheme = "Dark";
                 ThemeManager.ApplyTheme(Instances.DocumentEditor);
                 UpdateThemeCheckmarks();
@@ -93,6 +118,12 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             BuildCustomColorMenu(customMenuItem, "Wire Selected B", "CustomWireSelectedB");
             BuildCustomColorMenu(customMenuItem, "Wire Empty", "CustomWireEmpty");
 
+            customMenuItem.DropDownItems.Add(new ToolStripSeparator());
+            BuildCustomColorMenu(customMenuItem, "Ribbon Background", "CustomRibbonBack");
+            BuildCustomColorMenu(customMenuItem, "Ribbon Highlight", "CustomRibbonHighlight");
+            BuildCustomColorMenu(customMenuItem, "Ribbon Text", "CustomRibbonText");
+            BuildCustomNumberMenu(customMenuItem, "Ribbon Font Size", "CustomRibbonFontSize");
+
             themeMenu.DropDownItems.Add(defaultMenuItem);
             themeMenu.DropDownItems.Add(darkMenuItem);
             themeMenu.DropDownItems.Add(new ToolStripSeparator());
@@ -105,35 +136,112 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
         {
             ToolStripMenuItem propertyItem = new ToolStripMenuItem(displayName);
 
-            // To properly append the Grasshopper colour picker, we use the GUI utility:
-            // GH_DocumentObject.Menu_AppendColourPicker(parent_menu, value, delegate_for_value_change)
-            // But since we want it inside a nice "Property Name" dropdown, we construct the dropdown
-            // dynamically on opening.
+            // Add a dummy item to ensure the dropdown arrow is shown
+            propertyItem.DropDownItems.Add(new ToolStripMenuItem("..."));
+
+            bool _isResetting = false;
+
+            propertyItem.DropDown.Closing += (sender, eClosing) => {
+                if (_isResetting)
+                {
+                    eClosing.Cancel = true;
+                    _isResetting = false;
+                }
+            };
 
             propertyItem.DropDownOpening += (s, e) => {
                 propertyItem.DropDownItems.Clear();
 
                 Color currentColor = ThemeManager.GetCustomColor(propertyKey) ?? ThemeManager.GetDefaultColorForProperty(propertyKey);
 
-                GH_ColourPicker picker = new GH_ColourPicker();
-                picker.Colour = currentColor;
+                GH_DocumentObject.Menu_AppendColourPicker(propertyItem.DropDown, currentColor, (sender, args) => {
+                    ThemeManager.SetCustomColor(propertyKey, args.Colour, Instances.DocumentEditor);
+                });
 
-                picker.ColourChanged += (sender, args) => {
-                    ThemeManager.SetCustomColor(propertyKey, picker.Colour, Instances.DocumentEditor);
-                };
-
-                ToolStripControlHost pickerHost = new ToolStripControlHost(picker);
-                pickerHost.Margin = new Padding(0);
-                pickerHost.Padding = new Padding(0);
-
-                propertyItem.DropDownItems.Add(pickerHost);
                 propertyItem.DropDownItems.Add(new ToolStripSeparator());
 
                 ToolStripMenuItem resetItem = new ToolStripMenuItem("Reset");
-                resetItem.Click += (sender, args) => {
-                    ThemeManager.ClearCustomColor(propertyKey, Instances.DocumentEditor);
-                    propertyItem.DropDown.Close();
+                Image resetImg = GetResetImage();
+                if (resetImg != null)
+                {
+                    resetItem.Image = resetImg;
+                }
+
+                resetItem.MouseEnter += (sender, args) => {
+                    if (resetItem.GetCurrentParent() != null)
+                        resetItem.GetCurrentParent().Cursor = Cursors.Hand;
                 };
+
+                resetItem.MouseLeave += (sender, args) => {
+                    if (resetItem.GetCurrentParent() != null)
+                        resetItem.GetCurrentParent().Cursor = Cursors.Default;
+                };
+
+                resetItem.Click += (sender, args) => {
+                    _isResetting = true;
+                    ThemeManager.ClearCustomColor(propertyKey, Instances.DocumentEditor);
+                };
+
+                propertyItem.DropDownItems.Add(resetItem);
+            };
+
+            parent.DropDownItems.Add(propertyItem);
+        }
+
+        private void BuildCustomNumberMenu(ToolStripMenuItem parent, string displayName, string propertyKey)
+        {
+            ToolStripMenuItem propertyItem = new ToolStripMenuItem(displayName);
+
+            // Add a dummy item to ensure the dropdown arrow is shown
+            propertyItem.DropDownItems.Add(new ToolStripMenuItem("..."));
+
+            bool _isResetting = false;
+
+            propertyItem.DropDown.Closing += (sender, eClosing) => {
+                if (_isResetting)
+                {
+                    eClosing.Cancel = true;
+                    _isResetting = false;
+                }
+            };
+
+            propertyItem.DropDownOpening += (s, e) => {
+                propertyItem.DropDownItems.Clear();
+
+                int currentFontSize = ThemeManager.GetCustomRibbonFontSize();
+
+                GH_DocumentObject.Menu_AppendTextItem(propertyItem.DropDown, currentFontSize.ToString(), null, (sender, textArgs) => {
+                    if (sender is GH_MenuTextBox txt && int.TryParse(txt.Text, out int size) && size > 0)
+                    {
+                        ThemeManager.SetCustomRibbonFontSize(size);
+                    }
+                }, true, 100, true);
+
+                propertyItem.DropDownItems.Add(new ToolStripSeparator());
+
+                ToolStripMenuItem resetItem = new ToolStripMenuItem("Reset");
+                Image resetImg = GetResetImage();
+                if (resetImg != null)
+                {
+                    resetItem.Image = resetImg;
+                }
+
+                resetItem.MouseEnter += (sender, args) => {
+                    if (resetItem.GetCurrentParent() != null)
+                        resetItem.GetCurrentParent().Cursor = Cursors.Hand;
+                };
+
+                resetItem.MouseLeave += (sender, args) => {
+                    if (resetItem.GetCurrentParent() != null)
+                        resetItem.GetCurrentParent().Cursor = Cursors.Default;
+                };
+
+                resetItem.Click += (sender, args) => {
+                    _isResetting = true;
+                    Instances.Settings.SetValue(propertyKey, 0);
+                    ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                };
+
                 propertyItem.DropDownItems.Add(resetItem);
             };
 
