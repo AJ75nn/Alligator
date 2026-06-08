@@ -24,6 +24,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
         public PluginManagerFrm()
         {
             InitializeComponent();
+            this.AutoScaleMode = AutoScaleMode.Dpi;
             LoadData();
 
 
