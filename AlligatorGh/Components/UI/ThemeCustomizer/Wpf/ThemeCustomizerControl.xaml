@@ -75,15 +75,10 @@
                     <StackPanel>
                         <TextBlock Text="Custom Colors" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="0,0,0,14" />
 
-                        <ItemsControl ItemsSource="{Binding Groups}">
+                        <ItemsControl ItemsSource="{Binding ColorProperties}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Margin="0,0,0,15">
-                                        <TextBlock Text="{Binding Title}" Foreground="{DynamicResource Brush.Muted.Text}" FontSize="12" FontWeight="Bold" Margin="0,0,0,8" />
-                                        <ItemsControl ItemsSource="{Binding Properties}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Margin="0,0,0,10">
+                                    <Grid Margin="0,0,0,10">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="150" />
                                             <ColumnDefinition Width="*" />
@@ -212,11 +207,7 @@
                                         </Grid>
 
                                         <Button Grid.Column="3" Content="Reset" Style="{StaticResource GhostButton}" Command="{Binding ResetCommand}" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
+                                    </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>

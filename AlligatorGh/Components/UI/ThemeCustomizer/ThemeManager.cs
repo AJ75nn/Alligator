@@ -159,7 +159,8 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 // 2. Splitters (The horizontal resize bar beneath the ribbon)
                 else if (control is Splitter splitter)
                 {
-                    splitter.BackColor = isDark ? ribbonBack : DefaultUIControlBack;
+                    // Using CanvasEdge provides a crisp, subtle separator line in dark mode
+                    splitter.BackColor = isDark ? DarkCanvasEdge : DefaultUIControlBack;
                 }
                 // 3. Structural Panels (These containers often cause the light padding frames)
                 else if (control is Panel)
