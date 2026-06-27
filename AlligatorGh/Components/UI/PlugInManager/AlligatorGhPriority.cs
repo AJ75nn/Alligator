@@ -58,6 +58,8 @@ namespace AlligatorGh.Components.UI.PlugInManager
             if (uiControlMenu == null)
                 return;
 
+#if WPF
+            // The Plugin Manager is a WPF window, available only on the Windows .NET target.
             // Check if "Plugin Manager" already exists
             if (uiControlMenu.DropDownItems.Find("PluginManager", false).Length > 0)
                 return;
@@ -66,11 +68,11 @@ namespace AlligatorGh.Components.UI.PlugInManager
             managerMenuItem.Name = "PluginManager";
             managerMenuItem.Click += (s, e) =>
             {
-                PluginManagerFrm form = new PluginManagerFrm();
-                form.Show(documentEditor);
+                Wpf.PluginManagerWindowHost.ShowOrActivate(documentEditor);
             };
 
             uiControlMenu.DropDownItems.Add(managerMenuItem);
+#endif
 
             // Wait for the document editor to fully load and show
             documentEditor.Shown += DocumentEditor_Shown;

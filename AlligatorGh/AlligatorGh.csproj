@@ -34,6 +34,23 @@
 		<UseWindowsForms>true</UseWindowsForms>
 	</PropertyGroup>
 
+	<!-- WPF is Windows-only and not used on net48 here (Rhino 8 Windows loads the net7.0-windows gha).
+	     Enabling it only for the -windows TFM keeps the net7.0 (Mac) and net48 targets building.
+	     The WPF symbol guards the Plugin Manager window + its menu wiring; on Mac/net48 the menu
+	     item is simply not added. -->
+	<PropertyGroup Condition="$(TargetFramework.Contains('-windows'))">
+		<UseWpf>true</UseWpf>
+		<DefineConstants>$(DefineConstants);WPF</DefineConstants>
+	</PropertyGroup>
+
+	<!-- Keep all WPF sources (XAML + code-behind) out of the non-Windows compilations entirely.
+	     A .xaml markup file cannot be #if-guarded, so it must be removed as a build item here. -->
+	<ItemGroup Condition="!$(TargetFramework.Contains('-windows'))">
+		<Compile Remove="Components\UI\PlugInManager\Wpf\**\*.cs" />
+		<Page Remove="Components\UI\PlugInManager\Wpf\**\*.xaml" />
+		<ApplicationDefinition Remove="Components\UI\PlugInManager\Wpf\**\*.xaml" />
+	</ItemGroup>
+
 	<!-- Reference WinForms for .NET 7.0 on macOS -->
 	<ItemGroup Condition="!($(TargetFramework.Contains('-windows')) or $(TargetFramework.StartsWith('net4')))">
 		<!-- Rhino 8.11 and later you can use this -->

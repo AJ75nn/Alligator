@@ -1,0 +1,227 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Shared system converter for showing/hiding the row icon. -->
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+    <!--  ====================================================================
+          Animated Light/Dark toggle switch (templated ToggleButton).
+          Bind IsChecked to the VM's IsDark. All animations are Opacity/X only
+          (double), so they are safe against the DynamicResource theme brushes
+          (no ColorAnimation fighting the shared brushes during a theme swap).
+          ==================================================================== -->
+    <Style x:Key="ThemeToggleSwitch" TargetType="ToggleButton">
+        <Setter Property="Width" Value="52" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid>
+                        <!-- Off (light) track -->
+                        <Border x:Name="Track" CornerRadius="13"
+                                Background="{DynamicResource Brush.Track.Off}" />
+                        <!-- On (dark/accent) track, faded in when checked -->
+                        <Border x:Name="TrackOn" CornerRadius="13" Opacity="0"
+                                Background="{DynamicResource Brush.Accent}" />
+
+                        <!-- Sun (left, shown when light) / Moon (right, shown when dark) -->
+                        <TextBlock x:Name="SunGlyph" Text="&#xE706;"
+                                   FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{DynamicResource Brush.Muted.Text}"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center"
+                                   Margin="7,0,0,0" />
+                        <TextBlock x:Name="MoonGlyph" Text="&#xE708;"
+                                   FontFamily="Segoe MDL2 Assets" FontSize="11" Opacity="0"
+                                   Foreground="{DynamicResource Brush.Accent.Text}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
+
+                        <!-- Sliding thumb -->
+                        <Border x:Name="Thumb" Width="20" Height="20" CornerRadius="10"
+                                Background="{DynamicResource Brush.Card.Background}"
+                                HorizontalAlignment="Left" VerticalAlignment="Center"
+                                Margin="3,0,0,0">
+                            <Border.Effect>
+                                <DropShadowEffect Color="{DynamicResource Color.Shadow.Dark}"
+                                                  Direction="315" ShadowDepth="1.5"
+                                                  BlurRadius="4" Opacity="0.5" />
+                            </Border.Effect>
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="ThumbTransform" X="0" />
+                            </Border.RenderTransform>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="26" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseInOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="TrackOn"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.22" />
+                                        <DoubleAnimation Storyboard.TargetName="SunGlyph"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.16" />
+                                        <DoubleAnimation Storyboard.TargetName="MoonGlyph"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.22" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseInOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="TrackOn"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.22" />
+                                        <DoubleAnimation Storyboard.TargetName="SunGlyph"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.22" />
+                                        <DoubleAnimation Storyboard.TargetName="MoonGlyph"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.16" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  ====================================================================
+          Neumorphic buttons: a raised rounded surface with a soft drop shadow,
+          lifting on hover and pressing in (reduced shadow + slight offset) on
+          click. Primary = accent fill; Secondary = card fill.
+          ==================================================================== -->
+    <Style x:Key="NeuButtonBase" TargetType="Button">
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Surface" CornerRadius="9" Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{DynamicResource Color.Shadow.Dark}"
+                                              Direction="315" ShadowDepth="3"
+                                              BlurRadius="8" Opacity="0.45" />
+                        </Border.Effect>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Surface" Property="Opacity" Value="0.92" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Surface" Property="Opacity" Value="0.82" />
+                            <Setter TargetName="Surface" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform Y="1" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Surface" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource NeuButtonBase}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Text}" />
+    </Style>
+
+    <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource NeuButtonBase}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Card.Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    </Style>
+
+    <!-- Subtle text-style button for the top bulk actions (Check All / None). -->
+    <Style x:Key="GhostButton" TargetType="Button">
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Surface" CornerRadius="8" Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Surface" Property="Background"
+                                    Value="{DynamicResource Brush.Row.Selected}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Surface" Property="Opacity" Value="0.8" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A modern flat checkbox themed to the accent (used for per-row visibility). -->
+    <Style x:Key="VisibilityCheckBox" TargetType="CheckBox">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Grid Width="20" Height="20">
+                        <Border x:Name="Box" CornerRadius="5"
+                                Background="{DynamicResource Brush.Surface.Alt}"
+                                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" />
+                        <Border x:Name="Fill" CornerRadius="5" Opacity="0"
+                                Background="{DynamicResource Brush.Accent}" />
+                        <TextBlock x:Name="Check" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="11" Opacity="0"
+                                   Foreground="{DynamicResource Brush.Accent.Text}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Fill" Property="Opacity" Value="1" />
+                            <Setter TargetName="Check" Property="Opacity" Value="1" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
