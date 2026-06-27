@@ -26,6 +26,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Grasshopper" Version="8.28.26041.11001" ExcludeAssets="runtime" />
+		<PackageReference Include="Lib.Harmony" Version="2.2.2" />
 		<PackageReference Include="System.Resources.Extensions" Version="10.0.8" />
 	</ItemGroup>
 

@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using Grasshopper;
 using Grasshopper.GUI.Canvas;
 using Grasshopper.GUI;
+using Grasshopper.Kernel;
 
 namespace AlligatorGh.Components.UI.ThemeCustomizer
 {
@@ -109,6 +110,25 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
             Color? customWireEmpty = GetCustomColor("CustomWireEmpty");
             if (customWireEmpty.HasValue) GH_Skin.wire_empty = customWireEmpty.Value;
+
+            string compFontType = Instances.Settings.GetValue("CustomCompFontType", "");
+            if (!string.IsNullOrEmpty(compFontType))
+            {
+                try
+                {
+                    var newFamily = new FontFamily(compFontType);
+                    GH_FontServer.FamilyStandard = newFamily;
+                    GH_FontServer.FamilyConsole = newFamily;
+                }
+                catch { }
+            }
+
+            int compFontSize = Instances.Settings.GetValue("CustomCompFontSize", 0);
+            if (compFontSize > 0) ApplyComponentFontSize(compFontSize);
+
+            Color? scribbleColor = GetCustomColor("CustomScribbleText");
+            ScribbleThemePatcher.ScribbleTextColor = scribbleColor ?? (isDark ? Color.White : Color.Black);
+            ScribbleThemePatcher.ApplyPatch();
 
             // 2. Apply UI Chrome Properties
             ApplyUITheme(editor, isDark);
@@ -241,6 +261,66 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
         {
             Instances.Settings.SetValue("CustomRibbonFontSize", size);
             ApplyTheme(Instances.DocumentEditor);
+        }
+
+        private static void ApplyComponentFontSize(float newSize)
+        {
+            UpdateFontProperty("Standard", newSize);
+            UpdateFontProperty("StandardBold", newSize);
+            UpdateFontProperty("StandardItalic", newSize);
+
+            if (Instances.ActiveCanvas == null || Instances.ActiveCanvas.Document == null)
+                return;
+
+            foreach (IGH_DocumentObject docObject in Instances.ActiveCanvas.Document.Objects)
+            {
+                docObject.Attributes.ExpireLayout();
+            }
+
+            Instances.ActiveCanvas.Document.DestroyAttributeCache();
+            Instances.ActiveCanvas.Refresh();
+        }
+
+        private static void UpdateFontProperty(string propertyName, float newSize)
+        {
+            Type fontServerType = typeof(GH_FontServer);
+            System.Reflection.PropertyInfo propInfo = fontServerType.GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (propInfo == null) return;
+
+            Font currentFont = propInfo.GetValue(null, null) as Font;
+            if (currentFont == null) return;
+
+            Font newFont = new Font(currentFont.FontFamily, newSize, currentFont.Style, GraphicsUnit.Point);
+            System.Reflection.FieldInfo backingField = GetBackingField(fontServerType, propertyName);
+
+            if (backingField != null)
+            {
+                backingField.SetValue(null, newFont);
+            }
+        }
+
+        private static System.Reflection.FieldInfo GetBackingField(Type type, string propertyName)
+        {
+            System.Reflection.FieldInfo field = type.GetField($"m_{propertyName.ToLower()}", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.IgnoreCase);
+            if (field != null) return field;
+
+            field = type.GetField($"_{propertyName}", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.IgnoreCase);
+            if (field != null) return field;
+
+            field = type.GetField($"_{char.ToLower(propertyName[0])}{propertyName.Substring(1)}", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            if (field != null) return field;
+
+            field = type.GetField($"_font{propertyName}", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.IgnoreCase);
+            if (field != null) return field;
+
+            field = type.GetField($"_font{propertyName}8", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.IgnoreCase);
+            if (field != null) return field;
+
+            field = type.GetField($"_font{propertyName}10", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.IgnoreCase);
+            if (field != null) return field;
+
+            field = type.GetField($"<{propertyName}>k__BackingField", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            return field;
         }
     }
 
