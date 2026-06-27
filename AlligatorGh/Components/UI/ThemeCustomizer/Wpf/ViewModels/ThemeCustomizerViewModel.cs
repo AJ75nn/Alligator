@@ -29,8 +29,13 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
             _displayName = displayName;
             _propertyKey = propertyKey;
 
+            UpdateHSVFromColor();
+
             ResetCommand = new RelayCommand(ResetColor);
-            TogglePopupCommand = new RelayCommand(() => IsPopupOpen = !IsPopupOpen);
+            TogglePopupCommand = new RelayCommand(() => {
+                IsPopupOpen = !IsPopupOpen;
+                if (IsPopupOpen) UpdateHSVFromColor();
+            });
         }
 
         public string DisplayName => _displayName;
@@ -62,15 +67,13 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
             get
             {
                 var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
-                return $"#{col.A:X2}{col.R:X2}{col.G:X2}{col.B:X2}";
+                return $"{col.A:X2}{col.R:X2}{col.G:X2}{col.B:X2}";
             }
             set
             {
                 if (string.IsNullOrWhiteSpace(value)) return;
                 try
                 {
-                    // Basic parsing. ColorTranslator.FromHtml handles "#RRGGBB" or "RRGGBB", but not always AARRGGBB properly
-                    // We'll parse the hex string manually to ensure Alpha is supported
                     string hex = value.Trim().TrimStart('#');
                     if (hex.Length == 6)
                     {
@@ -86,11 +89,150 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                         ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(a, r, g, b), Instances.DocumentEditor);
                     }
 
-                    OnPropertyChanged(nameof(HexColor));
-                    OnPropertyChanged(nameof(CurrentColorMedia));
+                    Refresh();
                 }
                 catch { /* Ignore invalid hex input gracefully while typing */ }
             }
+        }
+
+        public string RValue
+        {
+            get
+            {
+                var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
+                return col.R.ToString();
+            }
+            set
+            {
+                if (byte.TryParse(value, out byte r))
+                {
+                    var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
+                    ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(col.A, r, col.G, col.B), Instances.DocumentEditor);
+                    Refresh();
+                }
+            }
+        }
+
+        public string GValue
+        {
+            get
+            {
+                var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
+                return col.G.ToString();
+            }
+            set
+            {
+                if (byte.TryParse(value, out byte g))
+                {
+                    var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
+                    ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(col.A, col.R, g, col.B), Instances.DocumentEditor);
+                    Refresh();
+                }
+            }
+        }
+
+        public string BValue
+        {
+            get
+            {
+                var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
+                return col.B.ToString();
+            }
+            set
+            {
+                if (byte.TryParse(value, out byte b))
+                {
+                    var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
+                    ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(col.A, col.R, col.G, b), Instances.DocumentEditor);
+                    Refresh();
+                }
+            }
+        }
+
+        private double _hue = 0;
+        private double _saturation = 0;
+        private double _value = 0;
+
+        private bool _isUpdatingFromHSV = false;
+
+        public double Hue => _hue;
+        public double Saturation => _saturation;
+        public double Value => _value;
+
+        public System.Windows.Media.Color HueColorMedia
+        {
+            get
+            {
+                Color c = ColorFromHSV(_hue, 1.0, 1.0);
+                return System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B);
+            }
+        }
+
+        public void SetHue(double hue)
+        {
+            _hue = hue;
+            UpdateColorFromHSV();
+            OnPropertyChanged(nameof(Hue));
+            OnPropertyChanged(nameof(HueColorMedia));
+        }
+
+        public void SetSaturationValue(double saturation, double value)
+        {
+            _saturation = saturation;
+            _value = value;
+            UpdateColorFromHSV();
+            OnPropertyChanged(nameof(Saturation));
+            OnPropertyChanged(nameof(Value));
+        }
+
+        private void UpdateColorFromHSV()
+        {
+            _isUpdatingFromHSV = true;
+            Color c = ColorFromHSV(_hue, _saturation, _value);
+            ThemeManager.SetCustomColor(_propertyKey, c, Instances.DocumentEditor);
+            Refresh();
+            _isUpdatingFromHSV = false;
+        }
+
+        private void UpdateHSVFromColor()
+        {
+            if (_isUpdatingFromHSV) return;
+
+            var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
+            ColorToHSV(col, out _hue, out _saturation, out _value);
+            OnPropertyChanged(nameof(Hue));
+            OnPropertyChanged(nameof(Saturation));
+            OnPropertyChanged(nameof(Value));
+            OnPropertyChanged(nameof(HueColorMedia));
+        }
+
+        private static void ColorToHSV(Color color, out double hue, out double saturation, out double value)
+        {
+            int max = Math.Max(color.R, Math.Max(color.G, color.B));
+            int min = Math.Min(color.R, Math.Min(color.G, color.B));
+
+            hue = color.GetHue();
+            saturation = (max == 0) ? 0 : 1d - (1d * min / max);
+            value = max / 255d;
+        }
+
+        private static Color ColorFromHSV(double hue, double saturation, double value)
+        {
+            int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
+            double f = hue / 60 - Math.Floor(hue / 60);
+
+            value = value * 255;
+            int v = Convert.ToInt32(value);
+            int p = Convert.ToInt32(value * (1 - saturation));
+            int q = Convert.ToInt32(value * (1 - f * saturation));
+            int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
+
+            if (hi == 0) return Color.FromArgb(255, v, t, p);
+            else if (hi == 1) return Color.FromArgb(255, q, v, p);
+            else if (hi == 2) return Color.FromArgb(255, p, v, t);
+            else if (hi == 3) return Color.FromArgb(255, p, q, v);
+            else if (hi == 4) return Color.FromArgb(255, t, p, v);
+            else return Color.FromArgb(255, v, p, q);
         }
 
         public ICommand ResetCommand { get; }
@@ -106,6 +248,11 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
         {
             OnPropertyChanged(nameof(CurrentColorMedia));
             OnPropertyChanged(nameof(HexColor));
+            OnPropertyChanged(nameof(RValue));
+            OnPropertyChanged(nameof(GValue));
+            OnPropertyChanged(nameof(BValue));
+
+            UpdateHSVFromColor();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
