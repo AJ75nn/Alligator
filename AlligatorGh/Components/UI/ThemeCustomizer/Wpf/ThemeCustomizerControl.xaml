@@ -89,14 +89,17 @@
                                         <TextBlock Grid.Column="0" Text="{Binding DisplayName}" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Text}" />
 
                                         <Grid Grid.Column="2" Margin="0,0,10,0">
-                                            <Border x:Name="ColorPreviewBorder" Width="60" Height="24" CornerRadius="4" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Cursor="Hand">
-                                                <Border.InputBindings>
-                                                    <MouseBinding Gesture="LeftClick" Command="{Binding TogglePopupCommand}" />
-                                                </Border.InputBindings>
-                                                <Border.Background>
-                                                    <SolidColorBrush Color="{Binding CurrentColorMedia}" />
-                                                </Border.Background>
-                                            </Border>
+                                            <Button x:Name="ColorPreviewBorder" Width="60" Height="24" Cursor="Hand" Command="{Binding TogglePopupCommand}">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border CornerRadius="4" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
+                                                            <Border.Background>
+                                                                <SolidColorBrush Color="{Binding CurrentColorMedia}" />
+                                                            </Border.Background>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
 
                                             <Popup IsOpen="{Binding IsPopupOpen}" StaysOpen="False" PlacementTarget="{Binding ElementName=ColorPreviewBorder}" Placement="Bottom" AllowsTransparency="True" Opened="Popup_Opened">
                                                 <Border CornerRadius="12" Background="{DynamicResource Brush.Card.Background}" Padding="14" Margin="0,5,10,10" Width="200">
