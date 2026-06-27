@@ -41,13 +41,28 @@ namespace AlligatorGh.Components.UI.PlugInManager
             if (alligatorMenu == null)
                 return;
 
-            // Find or create "UI Control" submenu
-            ToolStripItem[] uiControlMenuArr = alligatorMenu.DropDownItems.Find("mnuAlligatorUIControl", false);
+            // Add Dashboard menu item to the top
+            ToolStripItem[] dashboardItemArr = alligatorMenu.DropDownItems.Find("mnuAlligatorDashboard", false);
+            if (dashboardItemArr.Length == 0)
+            {
+                ToolStripMenuItem dashboardItem = new ToolStripMenuItem("UI Control");
+                dashboardItem.Name = "mnuAlligatorDashboard";
+#if WPF
+                dashboardItem.Click += (s, e) =>
+                {
+                    AlligatorGh.Components.UI.Dashboard.Wpf.DashboardWindowHost.ShowOrActivate(documentEditor);
+                };
+#endif
+                alligatorMenu.DropDownItems.Insert(0, dashboardItem);
+            }
+
+            // Find or create "Legacy UI Control" submenu
+            ToolStripItem[] uiControlMenuArr = alligatorMenu.DropDownItems.Find("mnuAlligatorLegacyUIControl", false);
             ToolStripMenuItem uiControlMenu;
             if (uiControlMenuArr.Length == 0)
             {
-                uiControlMenu = new ToolStripMenuItem("UI Control");
-                uiControlMenu.Name = "mnuAlligatorUIControl";
+                uiControlMenu = new ToolStripMenuItem("Legacy UI Control");
+                uiControlMenu.Name = "mnuAlligatorLegacyUIControl";
                 alligatorMenu.DropDownItems.Add(uiControlMenu);
             }
             else
@@ -61,17 +76,17 @@ namespace AlligatorGh.Components.UI.PlugInManager
 #if WPF
             // The Plugin Manager is a WPF window, available only on the Windows .NET target.
             // Check if "Plugin Manager" already exists
-            if (uiControlMenu.DropDownItems.Find("PluginManager", false).Length > 0)
-                return;
-
-            ToolStripMenuItem managerMenuItem = new ToolStripMenuItem("Plugin Manager");
-            managerMenuItem.Name = "PluginManager";
-            managerMenuItem.Click += (s, e) =>
+            if (uiControlMenu.DropDownItems.Find("PluginManager", false).Length == 0)
             {
-                Wpf.PluginManagerWindowHost.ShowOrActivate(documentEditor);
-            };
+                ToolStripMenuItem managerMenuItem = new ToolStripMenuItem("Plugin Manager");
+                managerMenuItem.Name = "PluginManager";
+                managerMenuItem.Click += (s, e) =>
+                {
+                    Wpf.PluginManagerWindowHost.ShowOrActivate(documentEditor);
+                };
 
-            uiControlMenu.DropDownItems.Add(managerMenuItem);
+                uiControlMenu.DropDownItems.Add(managerMenuItem);
+            }
 #endif
 
             // Wait for the document editor to fully load and show

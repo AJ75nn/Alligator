@@ -1,0 +1,123 @@
+<UserControl x:Class="AlligatorGh.Components.UI.PlugInManager.Wpf.PluginManagerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:AlligatorGh.Components.UI.PlugInManager.Wpf.ViewModels"
+             FontFamily="Segoe UI"
+             UseLayoutRounding="True"
+             TextOptions.TextFormattingMode="Display">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/AlligatorGh;component/Components/UI/PlugInManager/Wpf/Themes/Controls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <DataTemplate DataType="{x:Type vm:PluginRowViewModel}">
+                <Border x:Name="RowCard" CornerRadius="8" Margin="0,3"
+                        Background="{DynamicResource Brush.Card.Background}"
+                        Padding="6,0">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource Color.Shadow.Dark}"
+                                          Direction="315" ShadowDepth="1.5" BlurRadius="5" Opacity="0.35" />
+                    </Border.Effect>
+                    <Grid Height="42">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="34" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Drag handle -->
+                        <TextBlock Grid.Column="0" Tag="DragHandle" Text="&#xE76F;"
+                                   FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource Brush.Muted.Text}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Cursor="SizeAll" />
+
+                        <!-- Icon -->
+                        <Image Grid.Column="1" Width="16" Height="16" Margin="0,0,8,0"
+                               Source="{Binding Icon}" VerticalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               Visibility="{Binding ShowIcon, Converter={StaticResource BoolToVisibility}}" />
+
+                        <!-- Name -->
+                        <TextBlock Grid.Column="2" Text="{Binding Name}" FontSize="13"
+                                   Foreground="{DynamicResource Brush.Text}"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+
+                        <!-- Visibility checkbox -->
+                        <CheckBox Grid.Column="3" Style="{StaticResource VisibilityCheckBox}"
+                                  IsChecked="{Binding IsVisible, Mode=TwoWay}"
+                                  HorizontalAlignment="Center" />
+                    </Grid>
+                </Border>
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                        <Setter TargetName="RowCard" Property="Background"
+                                Value="{DynamicResource Brush.Row.Selected}" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header: title + theme toggle -->
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Plugin Manager" FontSize="18" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" />
+            </StackPanel>
+            <ToggleButton Style="{StaticResource ThemeToggleSwitch}"
+                          HorizontalAlignment="Right" VerticalAlignment="Center"
+                          ToolTip="Toggle light / dark theme"
+                          IsChecked="{Binding IsDark, Mode=TwoWay}" />
+        </Grid>
+
+        <!-- Bulk actions row -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Check all" Style="{StaticResource GhostButton}"
+                        Command="{Binding CheckAllCommand}" />
+                <Button Content="Check none" Style="{StaticResource GhostButton}" Margin="6,0,0,0"
+                        Command="{Binding CheckNoneCommand}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <CheckBox Style="{StaticResource VisibilityCheckBox}"
+                          IsChecked="{Binding ShowIcons, Mode=TwoWay}" VerticalAlignment="Center" />
+                <TextBlock Text="Show icons" Margin="8,0,0,0" FontSize="12.5"
+                           Foreground="{DynamicResource Brush.Muted.Text}" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Tab list (inset well) -->
+        <Border Grid.Row="2" CornerRadius="12" Padding="6"
+                Background="{DynamicResource Brush.Surface.Alt}">
+            <ScrollViewer x:Name="ListScroller" VerticalScrollBarVisibility="Auto"
+                          AllowDrop="True" Padding="2,0">
+                <ItemsControl x:Name="RowsControl" ItemsSource="{Binding Rows}" />
+            </ScrollViewer>
+        </Border>
+
+        <!-- Summary footer -->
+        <TextBlock Grid.Row="3" Text="{Binding SummaryText}" Margin="2,14"
+                   FontSize="12" HorizontalAlignment="Center"
+                   Foreground="{DynamicResource Brush.Muted.Text}" />
+
+        <!-- Bottom actions -->
+        <Grid Grid.Row="4">
+            <Button Content="Reset to native order" Style="{StaticResource SecondaryButton}"
+                    HorizontalAlignment="Left" Command="{Binding ResetCommand}" />
+            <Button Content="Apply" Style="{StaticResource PrimaryButton}" MinWidth="120"
+                    HorizontalAlignment="Right" Command="{Binding ApplyCommand}" />
+        </Grid>
+    </Grid>
+</UserControl>

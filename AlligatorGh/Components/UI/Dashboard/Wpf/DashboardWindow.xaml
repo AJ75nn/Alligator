@@ -1,0 +1,163 @@
+<Window x:Class="AlligatorGh.Components.UI.Dashboard.Wpf.DashboardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:AlligatorGh.Components.UI.Dashboard.Wpf.ViewModels"
+        xmlns:pm="clr-namespace:AlligatorGh.Components.UI.PlugInManager.Wpf.ViewModels"
+        xmlns:pm_ui="clr-namespace:AlligatorGh.Components.UI.PlugInManager.Wpf"
+        xmlns:tc="clr-namespace:AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels"
+        xmlns:tc_ui="clr-namespace:AlligatorGh.Components.UI.ThemeCustomizer.Wpf"
+        Title="Alligator Dashboard"
+        Width="800" Height="780" MinWidth="600" MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        FontFamily="Segoe UI"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        Background="{DynamicResource Brush.Window.Background}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/AlligatorGh;component/Components/UI/PlugInManager/Wpf/Themes/Controls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <DataTemplate DataType="{x:Type pm:PluginManagerViewModel}">
+                <pm_ui:PluginManagerControl />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type tc:ThemeCustomizerViewModel}">
+                <tc_ui:ThemeCustomizerControl />
+            </DataTemplate>
+
+            <Style x:Key="SidebarRadioButton" TargetType="RadioButton">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+                <Setter Property="Padding" Value="10,8" />
+                <Setter Property="Margin" Value="0,2" />
+                <Setter Property="Height" Value="40" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource Brush.Row.Selected}" />
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource Brush.Accent}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Text}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="HamburgerToggle" TargetType="ToggleButton">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="6">
+                                <TextBlock Text="&#xE700;" FontFamily="Segoe MDL2 Assets" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource Brush.Row.Selected}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Slide animation for sidebar -->
+            <Storyboard x:Key="ExpandSidebar">
+                <DoubleAnimation Storyboard.TargetName="SidebarColumn" Storyboard.TargetProperty="MaxWidth" To="200" Duration="0:0:0.2" />
+                <DoubleAnimation Storyboard.TargetName="SidebarColumn" Storyboard.TargetProperty="MinWidth" To="200" Duration="0:0:0.2" />
+            </Storyboard>
+            <Storyboard x:Key="CollapseSidebar">
+                <DoubleAnimation Storyboard.TargetName="SidebarColumn" Storyboard.TargetProperty="MaxWidth" To="60" Duration="0:0:0.2" />
+                <DoubleAnimation Storyboard.TargetName="SidebarColumn" Storyboard.TargetProperty="MinWidth" To="60" Duration="0:0:0.2" />
+            </Storyboard>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="SidebarColumn" Width="200" MaxWidth="200" MinWidth="200" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{DynamicResource Brush.Surface.Alt}" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource Brush.Border}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="10,10,10,20" Orientation="Horizontal">
+                    <ToggleButton x:Name="HamburgerBtn" Style="{StaticResource HamburgerToggle}" IsChecked="{Binding IsSidebarExpanded, Mode=TwoWay}" />
+                    <TextBlock x:Name="LogoText" Text="Alligator" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource Brush.Text}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=HamburgerBtn, Path=IsChecked}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Margin="10,0">
+                    <RadioButton Style="{StaticResource SidebarRadioButton}" IsChecked="{Binding IsPluginManagerSelected, Mode=TwoWay}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE179;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <TextBlock Text="Plugin Manager" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ElementName=HamburgerBtn, Path=IsChecked}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource SidebarRadioButton}" IsChecked="{Binding IsThemeCustomizerSelected, Mode=TwoWay}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <TextBlock Text="Theme" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ElementName=HamburgerBtn, Path=IsChecked}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Grid.Column="1">
+            <ContentControl Content="{Binding CurrentViewModel}" />
+        </Grid>
+    </Grid>
+</Window>

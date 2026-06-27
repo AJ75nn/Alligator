@@ -49,6 +49,12 @@
 		<Compile Remove="Components\UI\PlugInManager\Wpf\**\*.cs" />
 		<Page Remove="Components\UI\PlugInManager\Wpf\**\*.xaml" />
 		<ApplicationDefinition Remove="Components\UI\PlugInManager\Wpf\**\*.xaml" />
+		<Compile Remove="Components\UI\Dashboard\Wpf\**\*.cs" />
+		<Page Remove="Components\UI\Dashboard\Wpf\**\*.xaml" />
+		<ApplicationDefinition Remove="Components\UI\Dashboard\Wpf\**\*.xaml" />
+		<Compile Remove="Components\UI\ThemeCustomizer\Wpf\**\*.cs" />
+		<Page Remove="Components\UI\ThemeCustomizer\Wpf\**\*.xaml" />
+		<ApplicationDefinition Remove="Components\UI\ThemeCustomizer\Wpf\**\*.xaml" />
 	</ItemGroup>
 
 	<!-- Reference WinForms for .NET 7.0 on macOS -->
