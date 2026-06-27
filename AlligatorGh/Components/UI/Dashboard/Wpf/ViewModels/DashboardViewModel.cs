@@ -41,7 +41,12 @@ namespace AlligatorGh.Components.UI.Dashboard.Wpf.ViewModels
                 {
                     _isPluginManagerSelected = value;
                     OnPropertyChanged();
-                    if (value) UpdateCurrentViewModel();
+                    if (value)
+                    {
+                        _isThemeCustomizerSelected = false;
+                        OnPropertyChanged(nameof(IsThemeCustomizerSelected));
+                        UpdateCurrentViewModel();
+                    }
                 }
             }
         }
@@ -55,7 +60,12 @@ namespace AlligatorGh.Components.UI.Dashboard.Wpf.ViewModels
                 {
                     _isThemeCustomizerSelected = value;
                     OnPropertyChanged();
-                    if (value) UpdateCurrentViewModel();
+                    if (value)
+                    {
+                        _isPluginManagerSelected = false;
+                        OnPropertyChanged(nameof(IsPluginManagerSelected));
+                        UpdateCurrentViewModel();
+                    }
                 }
             }
         }

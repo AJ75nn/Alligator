@@ -119,7 +119,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Margin="10,0">
-                    <RadioButton Style="{StaticResource SidebarRadioButton}" IsChecked="{Binding IsPluginManagerSelected, Mode=TwoWay}">
+                    <RadioButton GroupName="SidebarTabs" Style="{StaticResource SidebarRadioButton}" IsChecked="{Binding IsPluginManagerSelected, Mode=TwoWay}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE179;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
                             <TextBlock Text="Plugin Manager" VerticalAlignment="Center">
@@ -135,7 +135,7 @@
                             </TextBlock>
                         </StackPanel>
                     </RadioButton>
-                    <RadioButton Style="{StaticResource SidebarRadioButton}" IsChecked="{Binding IsThemeCustomizerSelected, Mode=TwoWay}">
+                    <RadioButton GroupName="SidebarTabs" Style="{StaticResource SidebarRadioButton}" IsChecked="{Binding IsThemeCustomizerSelected, Mode=TwoWay}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
                             <TextBlock Text="Theme" VerticalAlignment="Center">
