@@ -262,23 +262,37 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
 
     public class ThemeCustomizerViewModel : INotifyPropertyChanged
     {
-        public ThemePropertyViewModel[] ColorProperties { get; }
+        public ThemeGroupViewModel[] Groups { get; }
 
         public ThemeCustomizerViewModel()
         {
-            ColorProperties = new[]
+            Groups = new[]
             {
-                new ThemePropertyViewModel("Canvas Background", "CustomCanvasBack"),
-                new ThemePropertyViewModel("Canvas Grid", "CustomCanvasGrid"),
-                new ThemePropertyViewModel("Canvas Edge", "CustomCanvasEdge"),
-                new ThemePropertyViewModel("Canvas Shade", "CustomCanvasShade"),
-                new ThemePropertyViewModel("Wire Default", "CustomWireDefault"),
-                new ThemePropertyViewModel("Wire Selected A", "CustomWireSelectedA"),
-                new ThemePropertyViewModel("Wire Selected B", "CustomWireSelectedB"),
-                new ThemePropertyViewModel("Wire Empty", "CustomWireEmpty"),
-                new ThemePropertyViewModel("Ribbon Background", "CustomRibbonBack"),
-                new ThemePropertyViewModel("Ribbon Highlight", "CustomRibbonHighlight"),
-                new ThemePropertyViewModel("Ribbon Text", "CustomRibbonText")
+                new ThemeGroupViewModel("General",
+                    new ThemePropertyViewModel("Canvas Background", "CustomCanvasBack"),
+                    new ThemePropertyViewModel("Canvas Grid", "CustomCanvasGrid"),
+                    new ThemePropertyViewModel("Canvas Edge", "CustomCanvasEdge"),
+                    new ThemePropertyViewModel("Canvas Shade", "CustomCanvasShade")
+                ),
+                new ThemeGroupViewModel("Wiring",
+                    new ThemePropertyViewModel("Wire Default", "CustomWireDefault"),
+                    new ThemePropertyViewModel("Wire Selected A", "CustomWireSelectedA"),
+                    new ThemePropertyViewModel("Wire Selected B", "CustomWireSelectedB"),
+                    new ThemePropertyViewModel("Wire Empty", "CustomWireEmpty")
+                ),
+                new ThemeGroupViewModel("Components",
+                    new ThemePropertyViewModel("Component Background", "CustomComponentBack"),
+                    new ThemePropertyViewModel("Component Border", "CustomComponentBorder"),
+                    new ThemePropertyViewModel("Component Warning", "CustomComponentWarning"),
+                    new ThemePropertyViewModel("Component Error", "CustomComponentError"),
+                    new ThemePropertyViewModel("Component Hidden", "CustomComponentHidden")
+                ),
+                new ThemeGroupViewModel("Elements",
+                    new ThemePropertyViewModel("Ribbon Background", "CustomRibbonBack"),
+                    new ThemePropertyViewModel("Ribbon Highlight", "CustomRibbonHighlight"),
+                    new ThemePropertyViewModel("Ribbon Text", "CustomRibbonText"),
+                    new ThemePropertyViewModel("Scribble Text", "CustomScribbleText")
+                )
             };
 
             SetDefaultBaseThemeCommand = new RelayCommand(() => SetBaseTheme("Default"));
@@ -301,8 +315,10 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
             OnPropertyChanged(nameof(IsDefaultBaseTheme));
             OnPropertyChanged(nameof(IsDarkBaseTheme));
             OnPropertyChanged(nameof(RibbonFontSizeText));
-            foreach (var prop in ColorProperties)
-                prop.Refresh();
+            OnPropertyChanged(nameof(CompFontSizeText));
+            OnPropertyChanged(nameof(CompFontType));
+            foreach (var group in Groups)
+                foreach(var prop in group.Properties) prop.Refresh();
         }
 
         private void ResetAllSettings()
@@ -322,10 +338,10 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                 OnPropertyChanged(nameof(IsDefaultBaseTheme));
                 OnPropertyChanged(nameof(IsDarkBaseTheme));
                 OnPropertyChanged(nameof(RibbonFontSizeText));
-                foreach (var prop in ColorProperties)
-                {
-                    prop.Refresh();
-                }
+                OnPropertyChanged(nameof(CompFontSizeText));
+                OnPropertyChanged(nameof(CompFontType));
+                foreach (var group in Groups)
+                    foreach(var prop in group.Properties) prop.Refresh();
             }
         }
 
@@ -347,6 +363,43 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                     Instances.Settings.SetValue("CustomRibbonFontSize", 0);
                     ThemeManager.ApplyTheme(Instances.DocumentEditor);
                 }
+                OnPropertyChanged();
+            }
+        }
+
+        public string CompFontSizeText
+        {
+            get
+            {
+                int sz = Instances.Settings.GetValue("CustomCompFontSize", 0);
+                return sz > 0 ? sz.ToString() : "";
+            }
+            set
+            {
+                if (int.TryParse(value, out int size) && size > 0)
+                {
+                    Instances.Settings.SetValue("CustomCompFontSize", size);
+                    ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                }
+                else if (string.IsNullOrWhiteSpace(value))
+                {
+                    Instances.Settings.SetValue("CustomCompFontSize", 0);
+                    ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                }
+                OnPropertyChanged();
+            }
+        }
+
+        public string CompFontType
+        {
+            get
+            {
+                return Instances.Settings.GetValue("CustomCompFontType", "");
+            }
+            set
+            {
+                Instances.Settings.SetValue("CustomCompFontType", value);
+                ThemeManager.ApplyTheme(Instances.DocumentEditor);
                 OnPropertyChanged();
             }
         }
