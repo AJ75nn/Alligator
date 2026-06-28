@@ -111,6 +111,71 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             Color? customWireEmpty = GetCustomColor("CustomWireEmpty");
             if (customWireEmpty.HasValue) GH_Skin.wire_empty = customWireEmpty.Value;
 
+            Color? customCompBack = GetCustomColor("CustomComponentBack");
+            Color? customCompBorder = GetCustomColor("CustomComponentBorder");
+            Color? customCompWarn = GetCustomColor("CustomComponentWarning");
+            Color? customCompErr = GetCustomColor("CustomComponentError");
+            Color? customCompHidden = GetCustomColor("CustomComponentHidden");
+            int compTransparency = Instances.Settings.GetValue("CustomCompTransparency", 255);
+
+            if (customCompBack.HasValue || customCompBorder.HasValue || compTransparency != 255)
+            {
+                Color fill = customCompBack ?? GH_Skin.palette_normal_standard.Fill;
+                fill = Color.FromArgb(compTransparency, fill.R, fill.G, fill.B);
+                GH_Skin.palette_normal_standard = new GH_PaletteStyle(fill, customCompBorder ?? GH_Skin.palette_normal_standard.Edge, GH_Skin.palette_normal_standard.Text);
+            }
+            if (customCompWarn.HasValue || customCompBorder.HasValue || compTransparency != 255)
+            {
+                Color fill = customCompWarn ?? GH_Skin.palette_warning_standard.Fill;
+                fill = Color.FromArgb(compTransparency, fill.R, fill.G, fill.B);
+                GH_Skin.palette_warning_standard = new GH_PaletteStyle(fill, customCompBorder ?? GH_Skin.palette_warning_standard.Edge, GH_Skin.palette_warning_standard.Text);
+            }
+            if (customCompErr.HasValue || customCompBorder.HasValue || compTransparency != 255)
+            {
+                Color fill = customCompErr ?? GH_Skin.palette_error_standard.Fill;
+                fill = Color.FromArgb(compTransparency, fill.R, fill.G, fill.B);
+                GH_Skin.palette_error_standard = new GH_PaletteStyle(fill, customCompBorder ?? GH_Skin.palette_error_standard.Edge, GH_Skin.palette_error_standard.Text);
+            }
+            if (customCompHidden.HasValue || customCompBorder.HasValue || compTransparency != 255)
+            {
+                Color fill = customCompHidden ?? GH_Skin.palette_hidden_standard.Fill;
+                fill = Color.FromArgb(compTransparency, fill.R, fill.G, fill.B);
+                GH_Skin.palette_hidden_standard = new GH_PaletteStyle(fill, customCompBorder ?? GH_Skin.palette_hidden_standard.Edge, GH_Skin.palette_hidden_standard.Text);
+            }
+
+            Color oldPanelBack = GH_Skin.panel_back;
+            Color oldGroupBack = GH_Skin.group_back;
+            Color? customPanelBack = GetCustomColor("CustomPanelBack");
+            Color? customGroupBack = GetCustomColor("CustomGroupBack");
+            if (customPanelBack.HasValue) GH_Skin.panel_back = customPanelBack.Value;
+            if (customGroupBack.HasValue) GH_Skin.group_back = customGroupBack.Value;
+
+            if (Instances.ActiveCanvas != null && Instances.ActiveCanvas.Document != null)
+            {
+                bool docChanged = false;
+                foreach (var obj in Instances.ActiveCanvas.Document.Objects)
+                {
+                    if (obj is Grasshopper.Kernel.Special.GH_Panel panel)
+                    {
+                        if (panel.Properties.Colour == oldPanelBack)
+                        {
+                            panel.Properties.Colour = GH_Skin.panel_back;
+                            docChanged = true;
+                        }
+                    }
+                    else if (obj is Grasshopper.Kernel.Special.GH_Group group)
+                    {
+                        if (group.Colour == oldGroupBack)
+                        {
+                            group.Colour = GH_Skin.group_back;
+                            docChanged = true;
+                        }
+                    }
+                }
+                if(docChanged) Instances.ActiveCanvas.Document.DestroyAttributeCache();
+            }
+            try { GH_Skin.SaveSkin(); } catch { }
+
             string compFontType = Instances.Settings.GetValue("CustomCompFontType", "");
             if (!string.IsNullOrEmpty(compFontType))
             {
@@ -179,7 +244,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 // 2. Splitters (The horizontal resize bar beneath the ribbon)
                 else if (control is Splitter splitter)
                 {
-                    splitter.BackColor = isDark ? ribbonBack : DefaultUIControlBack;
+                    splitter.BackColor = ribbonBack;
                 }
                 // 3. Structural Panels (These containers often cause the light padding frames)
                 else if (control is Panel)
@@ -212,13 +277,17 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             string[] keys = new string[] {
                 "CustomCanvasBack", "CustomCanvasGrid", "CustomCanvasEdge", "CustomCanvasShade",
                 "CustomWireDefault", "CustomWireSelectedA", "CustomWireSelectedB", "CustomWireEmpty",
-                "CustomRibbonBack", "CustomRibbonHighlight", "CustomRibbonText", "CustomRibbonFontSize"
+                "CustomRibbonBack", "CustomRibbonHighlight", "CustomRibbonText", "CustomRibbonFontSize",
+                "CustomComponentBack", "CustomComponentBorder", "CustomComponentWarning", "CustomComponentError", "CustomComponentHidden",
+                "CustomPanelBack", "CustomGroupBack", "CustomScribbleText", "CustomCompTransparency"
             };
 
             foreach (var key in keys)
             {
                 if (key == "CustomRibbonFontSize")
-                    Instances.Settings.SetValue(key, 0); // 0 indicates empty for font size
+                    Instances.Settings.SetValue(key, 0);
+                else if (key == "CustomCompTransparency")
+                    Instances.Settings.SetValue(key, 255);
                 else
                     Instances.Settings.SetValue(key, Color.Empty);
             }
@@ -246,6 +315,14 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             if (propName == "CustomRibbonBack") return baseTheme == "Dark" ? DarkUIMenuBack : DefaultUIControlBack;
             if (propName == "CustomRibbonHighlight") return baseTheme == "Dark" ? DarkUIHighlight : DefaultUIHighlight;
             if (propName == "CustomRibbonText") return baseTheme == "Dark" ? DarkUIMenuText : DefaultUIControlText;
+            if (propName == "CustomComponentBack") return GH_Skin.palette_normal_standard.Fill;
+            if (propName == "CustomComponentBorder") return GH_Skin.palette_normal_standard.Edge;
+            if (propName == "CustomComponentWarning") return GH_Skin.palette_warning_standard.Fill;
+            if (propName == "CustomComponentError") return GH_Skin.palette_error_standard.Fill;
+            if (propName == "CustomComponentHidden") return GH_Skin.palette_hidden_standard.Fill;
+            if (propName == "CustomPanelBack") return GH_Skin.panel_back;
+            if (propName == "CustomGroupBack") return GH_Skin.group_back;
+            if (propName == "CustomScribbleText") return ScribbleThemePatcher.ScribbleTextColor;
 
             return Color.Empty;
         }
