@@ -20,7 +20,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
         {
             Instances.CanvasCreated -= Instances_CanvasCreated;
 
-            GH_DocumentEditor documentEditor = Instances.DocumentEditor;
+            GH_DocumentEditor documentEditor = new GrasshopperUIFacade().GetDocumentEditor();
             if (documentEditor == null)
                 return;
 

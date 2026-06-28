@@ -19,21 +19,10 @@ namespace AlligatorGh.Components.UI.PlugInManager
             return _originalTabs.ToList();
         }
 
-        public static GH_Ribbon GetRibbon(Grasshopper.GUI.GH_DocumentEditor editor)
-        {
-            if (editor == null) return null;
-            var prop = typeof(Grasshopper.GUI.GH_DocumentEditor).GetProperty("Ribbon", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (prop != null)
-            {
-                return prop.GetValue(editor) as GH_Ribbon;
-            }
-            return null;
-        }
-
         private static void InitializeBackup()
         {
-            if (Instances.DocumentEditor == null) return;
-            var ribbon = GetRibbon(Instances.DocumentEditor);
+            if (new GrasshopperUIFacade().GetDocumentEditor() == null) return;
+            var ribbon = new GrasshopperUIFacade().GetRibbon();
             if (ribbon == null) return;
 
             if (_originalTabs == null)
@@ -69,8 +58,8 @@ namespace AlligatorGh.Components.UI.PlugInManager
 
         private static void ApplyLayoutInternal(List<PluginTabSettings> settings)
         {
-            if (Instances.DocumentEditor == null) return;
-            var ribbon = GetRibbon(Instances.DocumentEditor);
+            if (new GrasshopperUIFacade().GetDocumentEditor() == null) return;
+            var ribbon = new GrasshopperUIFacade().GetRibbon();
             if (ribbon == null) return;
 
             InitializeBackup();

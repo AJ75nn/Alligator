@@ -379,7 +379,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
         public static void SetCustomRibbonFontSize(int size)
         {
             Instances.Settings.SetValue("CustomRibbonFontSize", size);
-            ApplyTheme(Instances.DocumentEditor);
+            ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
         }
 
         private static void ApplyComponentFontSize(float newSize)

@@ -78,7 +78,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                     if (hex.Length == 6)
                     {
                         Color c = ColorTranslator.FromHtml("#" + hex);
-                        ThemeManager.SetCustomColor(_propertyKey, c, Instances.DocumentEditor);
+                        ThemeManager.SetCustomColor(_propertyKey, c, new GrasshopperUIFacade().GetDocumentEditor());
                     }
                     else if (hex.Length == 8)
                     {
@@ -86,7 +86,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                         byte r = Convert.ToByte(hex.Substring(2, 2), 16);
                         byte g = Convert.ToByte(hex.Substring(4, 2), 16);
                         byte b = Convert.ToByte(hex.Substring(6, 2), 16);
-                        ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(a, r, g, b), Instances.DocumentEditor);
+                        ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(a, r, g, b), new GrasshopperUIFacade().GetDocumentEditor());
                     }
 
                     Refresh();
@@ -107,7 +107,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                 if (byte.TryParse(value, out byte r))
                 {
                     var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
-                    ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(col.A, r, col.G, col.B), Instances.DocumentEditor);
+                    ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(col.A, r, col.G, col.B), new GrasshopperUIFacade().GetDocumentEditor());
                     Refresh();
                 }
             }
@@ -125,7 +125,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                 if (byte.TryParse(value, out byte g))
                 {
                     var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
-                    ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(col.A, col.R, g, col.B), Instances.DocumentEditor);
+                    ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(col.A, col.R, g, col.B), new GrasshopperUIFacade().GetDocumentEditor());
                     Refresh();
                 }
             }
@@ -143,7 +143,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                 if (byte.TryParse(value, out byte b))
                 {
                     var col = ThemeManager.GetCustomColor(_propertyKey) ?? ThemeManager.GetDefaultColorForProperty(_propertyKey);
-                    ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(col.A, col.R, col.G, b), Instances.DocumentEditor);
+                    ThemeManager.SetCustomColor(_propertyKey, Color.FromArgb(col.A, col.R, col.G, b), new GrasshopperUIFacade().GetDocumentEditor());
                     Refresh();
                 }
             }
@@ -189,7 +189,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
         {
             _isUpdatingFromHSV = true;
             Color c = ColorFromHSV(_hue, _saturation, _value);
-            ThemeManager.SetCustomColor(_propertyKey, c, Instances.DocumentEditor);
+            ThemeManager.SetCustomColor(_propertyKey, c, new GrasshopperUIFacade().GetDocumentEditor());
             Refresh();
             _isUpdatingFromHSV = false;
         }
@@ -240,7 +240,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
 
         private void ResetColor()
         {
-            ThemeManager.ClearCustomColor(_propertyKey, Instances.DocumentEditor);
+            ThemeManager.ClearCustomColor(_propertyKey, new GrasshopperUIFacade().GetDocumentEditor());
             Refresh();
         }
 
@@ -310,7 +310,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
         private void SetBaseTheme(string theme)
         {
             ThemeManager.CurrentBaseTheme = theme;
-            ThemeManager.ApplyTheme(Instances.DocumentEditor);
+            ThemeManager.ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
 
             OnPropertyChanged(nameof(IsDefaultBaseTheme));
             OnPropertyChanged(nameof(IsDarkBaseTheme));
@@ -331,9 +331,9 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
 
             if (result == System.Windows.MessageBoxResult.Yes)
             {
-                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
+                ThemeManager.ClearAllCustomSettings(new GrasshopperUIFacade().GetDocumentEditor());
                 ThemeManager.CurrentBaseTheme = "Default";
-                ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                ThemeManager.ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
 
                 OnPropertyChanged(nameof(IsDefaultBaseTheme));
                 OnPropertyChanged(nameof(IsDarkBaseTheme));
@@ -361,7 +361,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                 else if (string.IsNullOrWhiteSpace(value))
                 {
                     Instances.Settings.SetValue("CustomRibbonFontSize", 0);
-                    ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                    ThemeManager.ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
                 }
                 OnPropertyChanged();
             }
@@ -379,12 +379,12 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
                 if (int.TryParse(value, out int size) && size > 0)
                 {
                     Instances.Settings.SetValue("CustomCompFontSize", size);
-                    ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                    ThemeManager.ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
                 }
                 else if (string.IsNullOrWhiteSpace(value))
                 {
                     Instances.Settings.SetValue("CustomCompFontSize", 0);
-                    ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                    ThemeManager.ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
                 }
                 OnPropertyChanged();
             }
@@ -399,7 +399,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer.Wpf.ViewModels
             set
             {
                 Instances.Settings.SetValue("CustomCompFontType", value);
-                ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                ThemeManager.ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
                 OnPropertyChanged();
             }
         }

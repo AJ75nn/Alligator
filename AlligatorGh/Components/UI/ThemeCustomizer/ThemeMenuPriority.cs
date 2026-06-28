@@ -43,7 +43,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
         {
             Instances.CanvasCreated -= Instances_CanvasCreated;
 
-            GH_DocumentEditor documentEditor = Instances.DocumentEditor;
+            GH_DocumentEditor documentEditor = new GrasshopperUIFacade().GetDocumentEditor();
             if (documentEditor == null)
                 return;
 
@@ -88,9 +88,9 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             defaultMenuItem.Name = "mnuThemeDefault";
             defaultMenuItem.Click += (s, e) =>
             {
-                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
+                ThemeManager.ClearAllCustomSettings(new GrasshopperUIFacade().GetDocumentEditor());
                 ThemeManager.CurrentBaseTheme = "Default";
-                ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                ThemeManager.ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
                 UpdateThemeCheckmarks();
             };
 
@@ -98,9 +98,9 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             darkMenuItem.Name = "mnuThemeDark";
             darkMenuItem.Click += (s, e) =>
             {
-                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
+                ThemeManager.ClearAllCustomSettings(new GrasshopperUIFacade().GetDocumentEditor());
                 ThemeManager.CurrentBaseTheme = "Dark";
-                ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                ThemeManager.ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
                 UpdateThemeCheckmarks();
             };
 
@@ -155,7 +155,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 Color currentColor = ThemeManager.GetCustomColor(propertyKey) ?? ThemeManager.GetDefaultColorForProperty(propertyKey);
 
                 GH_DocumentObject.Menu_AppendColourPicker(propertyItem.DropDown, currentColor, (sender, args) => {
-                    ThemeManager.SetCustomColor(propertyKey, args.Colour, Instances.DocumentEditor);
+                    ThemeManager.SetCustomColor(propertyKey, args.Colour, new GrasshopperUIFacade().GetDocumentEditor());
                 });
 
                 propertyItem.DropDownItems.Add(new ToolStripSeparator());
@@ -179,7 +179,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
                 resetItem.Click += (sender, args) => {
                     _isResetting = true;
-                    ThemeManager.ClearCustomColor(propertyKey, Instances.DocumentEditor);
+                    ThemeManager.ClearCustomColor(propertyKey, new GrasshopperUIFacade().GetDocumentEditor());
                 };
 
                 propertyItem.DropDownItems.Add(resetItem);
@@ -239,7 +239,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 resetItem.Click += (sender, args) => {
                     _isResetting = true;
                     Instances.Settings.SetValue(propertyKey, 0);
-                    ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                    ThemeManager.ApplyTheme(new GrasshopperUIFacade().GetDocumentEditor());
                 };
 
                 propertyItem.DropDownItems.Add(resetItem);
@@ -255,7 +255,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
         public static void UpdateThemeCheckmarks()
         {
-            GH_DocumentEditor editor = Instances.DocumentEditor;
+            GH_DocumentEditor editor = new GrasshopperUIFacade().GetDocumentEditor();
             if (editor == null) return;
 
             ToolStripItem[] themeMenuArr = editor.MainMenuStrip.Items.Find("mnuAlligatorTheme", true);

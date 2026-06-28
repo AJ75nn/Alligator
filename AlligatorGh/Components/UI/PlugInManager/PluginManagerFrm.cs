@@ -137,10 +137,10 @@ namespace AlligatorGh.Components.UI.PlugInManager
 
         private void LoadData()
         {
-            if (Instances.DocumentEditor == null)
+            if (new GrasshopperUIFacade().GetDocumentEditor() == null)
                 return;
 
-            var ribbon = PluginManager.GetRibbon(Instances.DocumentEditor);
+            var ribbon = new GrasshopperUIFacade().GetRibbon();
             if (ribbon == null)
                 return;
 
