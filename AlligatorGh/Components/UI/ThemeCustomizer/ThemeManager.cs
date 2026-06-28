@@ -12,15 +12,31 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
     {
         private static bool _initialized = false;
 
-        // Default Canvas Theme (Grasshopper Native XML)
-        public static readonly Color DefaultCanvasBack = Color.FromArgb(255, 212, 208, 200);
-        public static readonly Color DefaultCanvasGrid = Color.FromArgb(30, 0, 0, 0);
-        public static readonly Color DefaultCanvasEdge = Color.FromArgb(255, 0, 0, 0);
-        public static readonly Color DefaultCanvasShade = Color.FromArgb(80, 0, 0, 0);
-        public static readonly Color DefaultWireDefault = Color.FromArgb(150, 0, 0, 0);
-        public static readonly Color DefaultWireSelectedA = Color.FromArgb(255, 125, 210, 40);
-        public static readonly Color DefaultWireSelectedB = Color.FromArgb(50, 0, 0, 0);
-        public static readonly Color DefaultWireEmpty = Color.FromArgb(180, 255, 60, 0);
+        // Default Canvas Theme (Loaded Dynamically)
+        public static Color DefaultCanvasBack => DefaultSettingsProvider.GetDefaultColor("canvas_backcolor");
+        public static Color DefaultCanvasGrid => DefaultSettingsProvider.GetDefaultColor("canvas_gridcolor");
+        public static Color DefaultCanvasEdge => DefaultSettingsProvider.GetDefaultColor("canvas_edgecolor");
+        public static Color DefaultCanvasShade => DefaultSettingsProvider.GetDefaultColor("canvas_shadecolor");
+        public static Color DefaultWireDefault => DefaultSettingsProvider.GetDefaultColor("wire_default");
+        public static Color DefaultWireSelectedA => DefaultSettingsProvider.GetDefaultColor("wire_selected_a");
+        public static Color DefaultWireSelectedB => DefaultSettingsProvider.GetDefaultColor("wire_selected_b");
+        public static Color DefaultWireEmpty => DefaultSettingsProvider.GetDefaultColor("wire_empty");
+
+        public static Color DefaultComponentFill => DefaultSettingsProvider.GetDefaultColor("normal.std.fill");
+        public static Color DefaultComponentEdge => DefaultSettingsProvider.GetDefaultColor("normal.std.edge");
+        public static Color DefaultComponentText => DefaultSettingsProvider.GetDefaultColor("normal.std.text");
+        public static Color DefaultWarningFill => DefaultSettingsProvider.GetDefaultColor("warning.std.fill");
+        public static Color DefaultWarningEdge => DefaultSettingsProvider.GetDefaultColor("warning.std.edge");
+        public static Color DefaultWarningText => DefaultSettingsProvider.GetDefaultColor("warning.std.text");
+        public static Color DefaultErrorFill => DefaultSettingsProvider.GetDefaultColor("error.std.fill");
+        public static Color DefaultErrorEdge => DefaultSettingsProvider.GetDefaultColor("error.std.edge");
+        public static Color DefaultErrorText => DefaultSettingsProvider.GetDefaultColor("error.std.text");
+        public static Color DefaultHiddenFill => DefaultSettingsProvider.GetDefaultColor("hidden.std.fill");
+        public static Color DefaultHiddenEdge => DefaultSettingsProvider.GetDefaultColor("hidden.std.edge");
+        public static Color DefaultHiddenText => DefaultSettingsProvider.GetDefaultColor("hidden.std.text");
+
+        public static Color DefaultPanelBack => DefaultSettingsProvider.GetDefaultColor("panel_backcolor");
+        public static Color DefaultGroupBack => DefaultSettingsProvider.GetDefaultColor("group_backcolor");
 
         // Default UI Chrome Theme
         public static readonly Color DefaultUIControlBack = Color.FromArgb(255, 240, 240, 240);
@@ -118,37 +134,52 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             Color? customCompHidden = GetCustomColor("CustomComponentHidden");
             int compTransparency = Instances.Settings.GetValue("CustomCompTransparency", 255);
 
-            if (customCompBack.HasValue || customCompBorder.HasValue || compTransparency != 255)
+            if (!isDark && !customCompBack.HasValue && !customCompBorder.HasValue && compTransparency == 255)
+                GH_Skin.palette_normal_standard = new GH_PaletteStyle(DefaultComponentFill, DefaultComponentEdge, DefaultComponentText);
+            else if (customCompBack.HasValue || customCompBorder.HasValue || compTransparency != 255)
             {
-                Color fill = customCompBack ?? GH_Skin.palette_normal_standard.Fill;
+                Color fill = customCompBack ?? (isDark ? GH_Skin.palette_normal_standard.Fill : DefaultComponentFill);
                 fill = Color.FromArgb(compTransparency, fill.R, fill.G, fill.B);
-                GH_Skin.palette_normal_standard = new GH_PaletteStyle(fill, customCompBorder ?? GH_Skin.palette_normal_standard.Edge, GH_Skin.palette_normal_standard.Text);
+                GH_Skin.palette_normal_standard = new GH_PaletteStyle(fill, customCompBorder ?? (isDark ? GH_Skin.palette_normal_standard.Edge : DefaultComponentEdge), isDark ? GH_Skin.palette_normal_standard.Text : DefaultComponentText);
             }
-            if (customCompWarn.HasValue || customCompBorder.HasValue || compTransparency != 255)
+
+            if (!isDark && !customCompWarn.HasValue && !customCompBorder.HasValue && compTransparency == 255)
+                GH_Skin.palette_warning_standard = new GH_PaletteStyle(DefaultWarningFill, DefaultWarningEdge, DefaultWarningText);
+            else if (customCompWarn.HasValue || customCompBorder.HasValue || compTransparency != 255)
             {
-                Color fill = customCompWarn ?? GH_Skin.palette_warning_standard.Fill;
+                Color fill = customCompWarn ?? (isDark ? GH_Skin.palette_warning_standard.Fill : DefaultWarningFill);
                 fill = Color.FromArgb(compTransparency, fill.R, fill.G, fill.B);
-                GH_Skin.palette_warning_standard = new GH_PaletteStyle(fill, customCompBorder ?? GH_Skin.palette_warning_standard.Edge, GH_Skin.palette_warning_standard.Text);
+                GH_Skin.palette_warning_standard = new GH_PaletteStyle(fill, customCompBorder ?? (isDark ? GH_Skin.palette_warning_standard.Edge : DefaultWarningEdge), isDark ? GH_Skin.palette_warning_standard.Text : DefaultWarningText);
             }
-            if (customCompErr.HasValue || customCompBorder.HasValue || compTransparency != 255)
+
+            if (!isDark && !customCompErr.HasValue && !customCompBorder.HasValue && compTransparency == 255)
+                GH_Skin.palette_error_standard = new GH_PaletteStyle(DefaultErrorFill, DefaultErrorEdge, DefaultErrorText);
+            else if (customCompErr.HasValue || customCompBorder.HasValue || compTransparency != 255)
             {
-                Color fill = customCompErr ?? GH_Skin.palette_error_standard.Fill;
+                Color fill = customCompErr ?? (isDark ? GH_Skin.palette_error_standard.Fill : DefaultErrorFill);
                 fill = Color.FromArgb(compTransparency, fill.R, fill.G, fill.B);
-                GH_Skin.palette_error_standard = new GH_PaletteStyle(fill, customCompBorder ?? GH_Skin.palette_error_standard.Edge, GH_Skin.palette_error_standard.Text);
+                GH_Skin.palette_error_standard = new GH_PaletteStyle(fill, customCompBorder ?? (isDark ? GH_Skin.palette_error_standard.Edge : DefaultErrorEdge), isDark ? GH_Skin.palette_error_standard.Text : DefaultErrorText);
             }
-            if (customCompHidden.HasValue || customCompBorder.HasValue || compTransparency != 255)
+
+            if (!isDark && !customCompHidden.HasValue && !customCompBorder.HasValue && compTransparency == 255)
+                GH_Skin.palette_hidden_standard = new GH_PaletteStyle(DefaultHiddenFill, DefaultHiddenEdge, DefaultHiddenText);
+            else if (customCompHidden.HasValue || customCompBorder.HasValue || compTransparency != 255)
             {
-                Color fill = customCompHidden ?? GH_Skin.palette_hidden_standard.Fill;
+                Color fill = customCompHidden ?? (isDark ? GH_Skin.palette_hidden_standard.Fill : DefaultHiddenFill);
                 fill = Color.FromArgb(compTransparency, fill.R, fill.G, fill.B);
-                GH_Skin.palette_hidden_standard = new GH_PaletteStyle(fill, customCompBorder ?? GH_Skin.palette_hidden_standard.Edge, GH_Skin.palette_hidden_standard.Text);
+                GH_Skin.palette_hidden_standard = new GH_PaletteStyle(fill, customCompBorder ?? (isDark ? GH_Skin.palette_hidden_standard.Edge : DefaultHiddenEdge), isDark ? GH_Skin.palette_hidden_standard.Text : DefaultHiddenText);
             }
 
             Color oldPanelBack = GH_Skin.panel_back;
             Color oldGroupBack = GH_Skin.group_back;
             Color? customPanelBack = GetCustomColor("CustomPanelBack");
             Color? customGroupBack = GetCustomColor("CustomGroupBack");
+
             if (customPanelBack.HasValue) GH_Skin.panel_back = customPanelBack.Value;
+            else if (!isDark) GH_Skin.panel_back = DefaultPanelBack;
+
             if (customGroupBack.HasValue) GH_Skin.group_back = customGroupBack.Value;
+            else if (!isDark) GH_Skin.group_back = DefaultGroupBack;
 
             if (Instances.ActiveCanvas != null && Instances.ActiveCanvas.Document != null)
             {
@@ -184,6 +215,17 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                     var newFamily = new FontFamily(compFontType);
                     GH_FontServer.FamilyStandard = newFamily;
                     GH_FontServer.FamilyConsole = newFamily;
+                }
+                catch { }
+            }
+            else
+            {
+                try
+                {
+                    string standardFont = DefaultSettingsProvider.GetDefaultFont("Font:Standard");
+                    string consoleFont = DefaultSettingsProvider.GetDefaultFont("Font:Console");
+                    if (!string.IsNullOrEmpty(standardFont)) GH_FontServer.FamilyStandard = new FontFamily(standardFont);
+                    if (!string.IsNullOrEmpty(consoleFont)) GH_FontServer.FamilyConsole = new FontFamily(consoleFont);
                 }
                 catch { }
             }
@@ -315,13 +357,13 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             if (propName == "CustomRibbonBack") return baseTheme == "Dark" ? DarkUIMenuBack : DefaultUIControlBack;
             if (propName == "CustomRibbonHighlight") return baseTheme == "Dark" ? DarkUIHighlight : DefaultUIHighlight;
             if (propName == "CustomRibbonText") return baseTheme == "Dark" ? DarkUIMenuText : DefaultUIControlText;
-            if (propName == "CustomComponentBack") return GH_Skin.palette_normal_standard.Fill;
-            if (propName == "CustomComponentBorder") return GH_Skin.palette_normal_standard.Edge;
-            if (propName == "CustomComponentWarning") return GH_Skin.palette_warning_standard.Fill;
-            if (propName == "CustomComponentError") return GH_Skin.palette_error_standard.Fill;
-            if (propName == "CustomComponentHidden") return GH_Skin.palette_hidden_standard.Fill;
-            if (propName == "CustomPanelBack") return GH_Skin.panel_back;
-            if (propName == "CustomGroupBack") return GH_Skin.group_back;
+            if (propName == "CustomComponentBack") return baseTheme == "Dark" ? GH_Skin.palette_normal_standard.Fill : DefaultComponentFill;
+            if (propName == "CustomComponentBorder") return baseTheme == "Dark" ? GH_Skin.palette_normal_standard.Edge : DefaultComponentEdge;
+            if (propName == "CustomComponentWarning") return baseTheme == "Dark" ? GH_Skin.palette_warning_standard.Fill : DefaultWarningFill;
+            if (propName == "CustomComponentError") return baseTheme == "Dark" ? GH_Skin.palette_error_standard.Fill : DefaultErrorFill;
+            if (propName == "CustomComponentHidden") return baseTheme == "Dark" ? GH_Skin.palette_hidden_standard.Fill : DefaultHiddenFill;
+            if (propName == "CustomPanelBack") return baseTheme == "Dark" ? GH_Skin.panel_back : DefaultPanelBack;
+            if (propName == "CustomGroupBack") return baseTheme == "Dark" ? GH_Skin.group_back : DefaultGroupBack;
             if (propName == "CustomScribbleText") return ScribbleThemePatcher.ScribbleTextColor;
 
             return Color.Empty;
