@@ -74,6 +74,8 @@
 
 	<ItemGroup>
 		<EmbeddedResource Include="Resources\*.png" />
+		<EmbeddedResource Include="Resources\grasshopper_gui.xml" />
+		<EmbeddedResource Include="Resources\grasshopper_kernel.xml" />
 	</ItemGroup>
 
 	<ItemGroup>
