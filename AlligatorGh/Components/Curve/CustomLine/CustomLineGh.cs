@@ -40,6 +40,15 @@ namespace AlligatorGh.Components.Curve.CustomLine
             DA.GetData(2, ref length);
             DA.GetData(3, ref bothSides);
 
+            // Guard against non-finite upstream values (NaN/Infinity) before they reach
+            // the geometry engine, where they would throw non-ArgumentException types.
+            // (double.IsFinite is unavailable on .NET Framework 4.8, so check explicitly.)
+            if (double.IsNaN(length) || double.IsInfinity(length) || length <= 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Length must be a finite, positive number.");
+                return;
+            }
+
             try
             {
                 // Rely on the Core engine for generating the XLine or Ray
@@ -50,6 +59,12 @@ namespace AlligatorGh.Components.Curve.CustomLine
             {
                 // Surface validation errors as Grasshopper component errors
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Catch-all so a Rhino geometry failure surfaces as a warning instead of
+                // crashing the document solution.
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Failed to create line: {ex.Message}");
             }
         }
 

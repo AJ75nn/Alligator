@@ -19,6 +19,19 @@ namespace AlligatorGh.Components.UI.PlugInManager
         private DraggablePluginItem _lastSelected = null;
         private bool _isBulkUpdating = false;
         private bool _saved = false;
+        private bool _dirty = false;
+
+        // Debounces live ribbon rebuilds during drag. DragOver fires dozens of times
+        // per second; rebuilding the live GH ribbon on each one caused severe stutter.
+        // The FlowLayoutPanel is reordered immediately (cheap) and the ribbon is only
+        // touched once the user pauses dragging (or on drop).
+        private System.Windows.Forms.Timer _previewTimer;
+
+        // Cache of generated symbol icons so repeated form opens / theme toggles do not
+        // allocate fresh GDI bitmaps (which leaked because prior PictureBox images were
+        // never disposed).
+        private static readonly Dictionary<string, Image> _symbolIconCache =
+            new Dictionary<string, Image>(StringComparer.Ordinal);
 
 
         public PluginManagerFrm()
@@ -27,11 +40,16 @@ namespace AlligatorGh.Components.UI.PlugInManager
             this.AutoScaleMode = AutoScaleMode.Dpi;
             LoadData();
 
-
             // Set up native drag-and-drop on the FlowLayoutPanel
             flpTabList.AllowDrop = true;
 
-
+            _previewTimer = new System.Windows.Forms.Timer();
+            _previewTimer.Interval = 150;
+            _previewTimer.Tick += (s, e) =>
+            {
+                _previewTimer.Stop();
+                ApplyLivePreview();
+            };
         }
 
         private void flpTabList_DragEnter(object sender, DragEventArgs e)
@@ -71,7 +89,9 @@ namespace AlligatorGh.Components.UI.PlugInManager
                 if (currentIndex != targetIndex)
                 {
                     flpTabList.Controls.SetChildIndex(draggingItem, targetIndex);
-                    ApplyLivePreview();
+                    // Defer the (expensive) live ribbon rebuild until dragging pauses.
+                    _previewTimer.Stop();
+                    _previewTimer.Start();
                 }
             }
         }
@@ -83,6 +103,12 @@ namespace AlligatorGh.Components.UI.PlugInManager
                 DraggablePluginItem draggingItem = (DraggablePluginItem)e.Data.GetData(typeof(DraggablePluginItem));
                 draggingItem.BackColor = draggingItem.IsSelected ? Color.LightBlue : Color.White;
             }
+
+            // Commit the final drag position to the ribbon immediately and stop the
+            // debounce timer so it does not fire again after drop.
+            _previewTimer.Stop();
+            _dirty = true;
+            ApplyLivePreview();
         }
 
         private void ApplyLivePreview()
@@ -289,6 +315,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
                     }
 
                     ApplyLivePreview();
+                    _dirty = true;
                 };
 
                 // Forward click to form for multi-select logic
@@ -310,6 +337,14 @@ namespace AlligatorGh.Components.UI.PlugInManager
         }
         private Image CreateSymbolIcon(string symbol)
         {
+            // Reuse a cached bitmap per symbol so repeated form opens do not leak GDI
+            // handles (each prior call allocated a fresh Bitmap assigned to a PictureBox).
+            if (symbol == null) symbol = string.Empty;
+            if (_symbolIconCache.TryGetValue(symbol, out Image cached))
+            {
+                return cached;
+            }
+
             var bmp = new Bitmap(16, 16);
             using (var g = Graphics.FromImage(bmp))
             {
@@ -328,6 +363,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
                     g.DrawString(symbol, font, brush, new RectangleF(0, 0, 16, 16), sf);
                 }
             }
+            _symbolIconCache[symbol] = bmp;
             return bmp;
         }
 
@@ -345,6 +381,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
             }
 
             _isBulkUpdating = false;
+            _dirty = true;
             ApplyLivePreview();
         }
 
@@ -362,6 +399,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
             }
 
             _isBulkUpdating = false;
+            _dirty = true;
             ApplyLivePreview();
         }
 
@@ -448,17 +486,51 @@ namespace AlligatorGh.Components.UI.PlugInManager
         }
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            if (!_saved)
+            if (!_saved && _dirty)
             {
-                // Revert to saved settings
+                var answer = MessageBox.Show(this,
+                    "You have unsaved changes to the ribbon layout. Discard them and revert to the saved layout?",
+                    "Unsaved Changes",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question);
+
+                if (answer == DialogResult.Cancel)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
+                if (answer == DialogResult.No)
+                {
+                    // Keep and persist the current working state, then proceed to close.
+                    SaveAndApplyCurrent();
+                }
+                else
+                {
+                    // Yes: discard -> revert to saved settings.
+                    PluginManager.ApplyLayout();
+                }
+            }
+            else if (!_saved)
+            {
+                // No changes were made; still ensure the ribbon reflects saved state.
                 PluginManager.ApplyLayout();
             }
+
+            if (_previewTimer != null)
+            {
+                _previewTimer.Stop();
+                _previewTimer.Dispose();
+                _previewTimer = null;
+            }
+
             base.OnFormClosing(e);
         }
 
-        private void btnSave_Click(object sender, EventArgs e)
+        // Persists the current UI ordering/visibility and applies it to the live ribbon.
+        // Shared by Save and by the "keep changes" close path so neither re-enters Close().
+        private void SaveAndApplyCurrent()
         {
-            _saved = true;
             var newSettings = new List<PluginTabSettings>();
             for (int i = 0; i < flpTabList.Controls.Count; i++)
             {
@@ -475,6 +547,13 @@ namespace AlligatorGh.Components.UI.PlugInManager
 
             PluginManagerSettings.SaveSettings(newSettings);
             PluginManager.ApplyLayout();
+            _saved = true;
+            _dirty = false;
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            SaveAndApplyCurrent();
             this.Close();
         }
 

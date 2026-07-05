@@ -24,37 +24,13 @@ namespace AlligatorGh.Components.UI.PlugInManager
             if (documentEditor == null)
                 return;
 
-            // Find or create "Alligator" main menu
-            ToolStripItem[] alligatorMenuArr = documentEditor.MainMenuStrip.Items.Find("mnuAlligator", false);
-            ToolStripMenuItem alligatorMenu;
-            if (alligatorMenuArr.Length == 0)
-            {
-                alligatorMenu = new ToolStripMenuItem("Alligator");
-                alligatorMenu.Name = "mnuAlligator";
-                documentEditor.MainMenuStrip.Items.Add(alligatorMenu);
-            }
-            else
-            {
-                alligatorMenu = alligatorMenuArr[0] as ToolStripMenuItem;
-            }
-
+            // Find or create "Alligator" main menu and "UI Control" submenu via the
+            // shared bootstrapper so this logic is not duplicated across modules.
+            ToolStripMenuItem alligatorMenu = AlligatorMenuBootstrapper.GetOrCreateAlligatorMenu(documentEditor);
             if (alligatorMenu == null)
                 return;
 
-            // Find or create "UI Control" submenu
-            ToolStripItem[] uiControlMenuArr = alligatorMenu.DropDownItems.Find("mnuAlligatorUIControl", false);
-            ToolStripMenuItem uiControlMenu;
-            if (uiControlMenuArr.Length == 0)
-            {
-                uiControlMenu = new ToolStripMenuItem("UI Control");
-                uiControlMenu.Name = "mnuAlligatorUIControl";
-                alligatorMenu.DropDownItems.Add(uiControlMenu);
-            }
-            else
-            {
-                uiControlMenu = uiControlMenuArr[0] as ToolStripMenuItem;
-            }
-
+            ToolStripMenuItem uiControlMenu = AlligatorMenuBootstrapper.GetOrCreateSubMenu(alligatorMenu, "mnuAlligatorUIControl", "UI Control");
             if (uiControlMenu == null)
                 return;
 
@@ -78,15 +54,40 @@ namespace AlligatorGh.Components.UI.PlugInManager
 
         private void DocumentEditor_Shown(object sender, System.EventArgs e)
         {
-            // Grasshopper editor has shown, ribbon is populated.
-            // We apply our layout slightly delayed to ensure all 3rd party plugins finished injecting tabs.
-            System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-            timer.Interval = 500; // 500ms delay
+            // 3rd-party plugins inject ribbon tabs asynchronously after the editor shows.
+            // A fixed 500ms delay misses slow-loading plugins. Instead, poll until the tab
+            // set stabilizes (unchanged across two consecutive samples), with a hard timeout
+            // so the saved layout is always applied eventually.
+            var timer = new System.Windows.Forms.Timer();
+            int lastCount = -1;
+            int stableTicks = 0;
+            int samples = 0;
+            const int SampleIntervalMs = 250;
+            const int RequiredStableSamples = 2;
+            const int MaxSamples = 24; // ~6s hard timeout
+
+            timer.Interval = SampleIntervalMs;
             timer.Tick += (s, args) =>
             {
-                timer.Stop();
-                timer.Dispose();
-                PluginManager.ApplyLayout();
+                samples++;
+                int currentCount = PluginManager.GetAllTabs().Count;
+
+                if (currentCount == lastCount)
+                {
+                    stableTicks++;
+                }
+                else
+                {
+                    stableTicks = 0;
+                    lastCount = currentCount;
+                }
+
+                if (stableTicks >= RequiredStableSamples || samples >= MaxSamples)
+                {
+                    timer.Stop();
+                    timer.Dispose();
+                    PluginManager.ApplyLayout();
+                }
             };
             timer.Start();
         }

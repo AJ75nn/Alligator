@@ -49,33 +49,10 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
             ThemeManager.Initialize(documentEditor);
 
-            ToolStripItem[] alligatorMenuArr = documentEditor.MainMenuStrip.Items.Find("mnuAlligator", false);
-            ToolStripMenuItem alligatorMenu;
-            if (alligatorMenuArr.Length == 0)
-            {
-                alligatorMenu = new ToolStripMenuItem("Alligator");
-                alligatorMenu.Name = "mnuAlligator";
-                documentEditor.MainMenuStrip.Items.Add(alligatorMenu);
-            }
-            else
-            {
-                alligatorMenu = alligatorMenuArr[0] as ToolStripMenuItem;
-            }
-
+            ToolStripMenuItem alligatorMenu = AlligatorMenuBootstrapper.GetOrCreateAlligatorMenu(documentEditor);
             if (alligatorMenu == null) return;
 
-            ToolStripItem[] customizeUIMenuArr = alligatorMenu.DropDownItems.Find("mnuAlligatorCustomizeUI", false);
-            ToolStripMenuItem customizeUIMenu;
-            if (customizeUIMenuArr.Length == 0)
-            {
-                customizeUIMenu = new ToolStripMenuItem("Customize UI");
-                customizeUIMenu.Name = "mnuAlligatorCustomizeUI";
-                alligatorMenu.DropDownItems.Add(customizeUIMenu);
-            }
-            else
-            {
-                customizeUIMenu = customizeUIMenuArr[0] as ToolStripMenuItem;
-            }
+            ToolStripMenuItem customizeUIMenu = AlligatorMenuBootstrapper.GetOrCreateSubMenu(alligatorMenu, "mnuAlligatorCustomizeUI", "Customize UI");
 
             if (customizeUIMenu.DropDownItems.Find("mnuAlligatorTheme", false).Length > 0)
                 return;
@@ -88,9 +65,8 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             defaultMenuItem.Name = "mnuThemeDefault";
             defaultMenuItem.Click += (s, e) =>
             {
-                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
                 ThemeManager.CurrentBaseTheme = "Default";
-                ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
                 UpdateThemeCheckmarks();
             };
 
@@ -98,9 +74,8 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
             darkMenuItem.Name = "mnuThemeDark";
             darkMenuItem.Click += (s, e) =>
             {
-                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
                 ThemeManager.CurrentBaseTheme = "Dark";
-                ThemeManager.ApplyTheme(Instances.DocumentEditor);
+                ThemeManager.ClearAllCustomSettings(Instances.DocumentEditor);
                 UpdateThemeCheckmarks();
             };
 

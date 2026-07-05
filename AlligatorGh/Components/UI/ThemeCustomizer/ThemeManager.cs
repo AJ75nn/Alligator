@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using Grasshopper;
@@ -9,7 +10,11 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 {
     public static class ThemeManager
     {
-        private static bool _initialized = false;
+        // Fonts we have created and assigned to ToolStrips. Tracked so we can dispose
+        // the previously-assigned Font on the next ApplyTheme call instead of leaking
+        // a GDI Font handle per ToolStrip per theme change. Default/shared fonts are
+        // never disposed (they are not in this set).
+        private static readonly HashSet<Font> _ownedFonts = new HashSet<Font>();
 
         // Default Canvas Theme (Grasshopper Native XML)
         public static readonly Color DefaultCanvasBack = Color.FromArgb(255, 212, 208, 200);
@@ -50,10 +55,7 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
         public static void Initialize(GH_DocumentEditor editor)
         {
-            if (_initialized) return;
-
             ApplyTheme(editor);
-            _initialized = true;
         }
 
         public static void ApplyTheme(GH_DocumentEditor editor)
@@ -151,7 +153,18 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
 
                     if (toolStrip.Font.Size != ribbonFontSize)
                     {
-                        toolStrip.Font = new Font(toolStrip.Font.FontFamily, ribbonFontSize, toolStrip.Font.Style);
+                        // Replace the font with a size-adjusted copy, disposing the
+                        // previously-owned font to avoid leaking a GDI handle per
+                        // ToolStrip per theme change. Default/shared fonts (not in
+                        // _ownedFonts) are left untouched.
+                        Font previousFont = toolStrip.Font;
+                        Font newFont = new Font(previousFont.FontFamily, ribbonFontSize, previousFont.Style);
+                        toolStrip.Font = newFont;
+                        _ownedFonts.Add(newFont);
+                        if (previousFont != null && _ownedFonts.Remove(previousFont))
+                        {
+                            previousFont.Dispose();
+                        }
                     }
 
                     toolStrip.Renderer = new AlligatorDarkMenuRenderer(ribbonBack, ribbonText, ribbonHighlight, isDark);
@@ -203,6 +216,11 @@ namespace AlligatorGh.Components.UI.ThemeCustomizer
                 else
                     Instances.Settings.SetValue(key, Color.Empty);
             }
+
+            // Consistent with SetCustomColor / ClearCustomColor, applying the theme here
+            // so callers do not need a redundant ApplyTheme call. Callers must set the
+            // desired CurrentBaseTheme before invoking this method.
+            ApplyTheme(editor);
         }
 
         public static Color? GetCustomColor(string key)

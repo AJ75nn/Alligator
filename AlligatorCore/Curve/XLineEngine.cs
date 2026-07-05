@@ -74,12 +74,14 @@ namespace AlligatorCore.Curve
             if (bothSides)
             {
                 Point3d start = p1 - (direction * length);
-                Polyline poly = new Polyline() { start, p1, p2, end };
+                // p2 is collinear with p1 and end (dir derives from p2-p1), so it is
+                // omitted to avoid a redundant vertex while keeping the base point explicit.
+                Polyline poly = new Polyline() { start, p1, end };
                 return poly.ToNurbsCurve();
             }
             else
             {
-                Polyline poly = new Polyline() { p1, p2, end };
+                Polyline poly = new Polyline() { p1, end };
                 return poly.ToNurbsCurve();
             }
         }
@@ -148,10 +150,17 @@ namespace AlligatorCore.Curve
 
             dir.Unitize();
 
-            // Assume working in XY plane for offset direction (similar to AutoCAD default behavior)
-            // Normal to the line in XY plane: (-Y, X, 0)
-            Vector3d normal = new Vector3d(-dir.Y, dir.X, 0);
-            normal.Unitize();
+            // Compute an in-plane normal to the reference direction. Cross with the
+            // world Z-axis to stay in the XY plane (matching AutoCAD's default offset
+            // behavior). When the line is parallel to Z the cross is zero, so fall back
+            // to the world X-axis to guarantee a non-degenerate normal.
+            Vector3d normal = Vector3d.CrossProduct(Vector3d.ZAxis, dir);
+            if (!normal.Unitize())
+            {
+                normal = Vector3d.CrossProduct(Vector3d.XAxis, dir);
+            }
+            if (!normal.Unitize())
+                throw new ArgumentException("Could not determine an offset normal for the reference direction.");
 
             // Determine if sidePoint is in the direction of the normal or opposite
             Vector3d toSide = sidePoint - refLine.From;

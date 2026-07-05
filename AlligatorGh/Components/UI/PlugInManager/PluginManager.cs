@@ -4,19 +4,22 @@ using System.Linq;
 using System.Reflection;
 using Grasshopper;
 using Grasshopper.GUI.Ribbon;
+using Rhino;
 
 namespace AlligatorGh.Components.UI.PlugInManager
 {
     public static class PluginManager
     {
-        // We need to keep a backup of all original tabs because if we remove them from the ribbon,
-        // we can't easily retrieve them to show them again later.
-        private static List<GH_RibbonTab> _originalTabs = null;
+        // Persistent store of every tab we have ever seen during this session.
+        // Hidden tabs are removed from the live ribbon, so this backup is required
+        // to remember them so the user can re-enable them later. Keyed by NameFull for
+        // O(1) dedup instead of the previous O(n) list scan.
+        private static readonly Dictionary<string, GH_RibbonTab> _knownTabs = new Dictionary<string, GH_RibbonTab>(StringComparer.Ordinal);
 
         public static List<GH_RibbonTab> GetAllTabs()
         {
             InitializeBackup();
-            return _originalTabs.ToList();
+            return _knownTabs.Values.ToList();
         }
 
         public static GH_Ribbon GetRibbon(Grasshopper.GUI.GH_DocumentEditor editor)
@@ -27,6 +30,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
             {
                 return prop.GetValue(editor) as GH_Ribbon;
             }
+            LogReflectionFailure("GH_DocumentEditor.Ribbon", null);
             return null;
         }
 
@@ -36,21 +40,17 @@ namespace AlligatorGh.Components.UI.PlugInManager
             var ribbon = GetRibbon(Instances.DocumentEditor);
             if (ribbon == null) return;
 
-            if (_originalTabs == null)
-            {
-                _originalTabs = new List<GH_RibbonTab>();
-            }
-
-            // Sync with current tabs in the ribbon
+            // Sync with current tabs in the ribbon.
             // Some new plugins might have loaded since last time.
             var currentTabs = GetRibbonTabs(ribbon);
             if (currentTabs != null)
             {
                 foreach (var tab in currentTabs)
                 {
-                    if (!_originalTabs.Any(t => t.NameFull == tab.NameFull))
+                    if (tab == null) continue;
+                    if (!_knownTabs.ContainsKey(tab.NameFull))
                     {
-                        _originalTabs.Add(tab);
+                        _knownTabs[tab.NameFull] = tab;
                     }
                 }
             }
@@ -78,61 +78,80 @@ namespace AlligatorGh.Components.UI.PlugInManager
             var ribbonTabs = GetRibbonTabs(ribbon);
             if (ribbonTabs == null) return;
 
-            ribbonTabs.Clear();
+            // Snapshot the live tabs BEFORE clearing so we can restore them if the
+            // rebuild throws. Without this, an exception between Clear() and AddRange()
+            // would leave the ribbon permanently empty with no recovery path.
+            var liveSnapshot = ribbonTabs.ToList();
 
-            // Reconstruct the list based on settings
-            var sortedTabsToApply = new List<GH_RibbonTab>();
-
-            foreach (var setting in settings)
+            try
             {
-                if (setting.Visible)
+                ribbonTabs.Clear();
+
+                // Reconstruct the list based on settings
+                var sortedTabsToApply = new List<GH_RibbonTab>();
+
+                if (settings != null)
                 {
-                    var tab = _originalTabs.FirstOrDefault(t => t.NameFull == setting.Name);
-                    if (tab != null)
+                    foreach (var setting in settings)
+                    {
+                        if (setting.Visible && _knownTabs.TryGetValue(setting.Name, out var tab))
+                        {
+                            sortedTabsToApply.Add(tab);
+                        }
+                    }
+                }
+
+                // Also add any tabs that are not in the settings (default to visible and put them at the end)
+                foreach (var tab in _knownTabs.Values)
+                {
+                    if (settings == null || !settings.Any(s => s.Name == tab.NameFull))
                     {
                         sortedTabsToApply.Add(tab);
                     }
                 }
-            }
 
-            // Also add any new tabs that are not in the settings (default to visible and put them at the end)
-            foreach (var tab in _originalTabs)
-            {
-                if (!settings.Any(s => s.Name == tab.NameFull))
+                // Add them back to the ribbon
+                ribbonTabs.AddRange(sortedTabsToApply);
+
+                // Re-call layout mechanism internally.
+                var mLayout = typeof(GH_Ribbon).GetMethod("LayoutRibbon", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (mLayout != null)
                 {
-                    sortedTabsToApply.Add(tab);
+                    mLayout.Invoke(ribbon, null);
+                }
+                else
+                {
+                    LogReflectionFailure("GH_Ribbon.LayoutRibbon", null);
                 }
             }
-
-            // Add them back to the ribbon
-            ribbonTabs.AddRange(sortedTabsToApply);
-
-            // Calling PopulateRibbon replaces the ribbon tabs with defaults, destroying our custom order.
-            // Instead, we just need to re-layout the ribbon to fix any gaps left by removed/reordered tabs.
-            // Grasshopper Ribbon dynamically recalculates rects when LayoutRibbon is called.
-
-            // Re-call layout mechanism internally
-            var mLayout = typeof(GH_Ribbon).GetMethod("LayoutRibbon", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (mLayout != null)
+            catch (Exception ex)
             {
-                mLayout.Invoke(ribbon, null);
+                // Restore the pre-apply live state so the ribbon is never left empty.
+                LogReflectionFailure("ribbon rebuild", ex);
+                try
+                {
+                    ribbonTabs.Clear();
+                    ribbonTabs.AddRange(liveSnapshot);
+                }
+                catch (Exception ex2)
+                {
+                    LogReflectionFailure("ribbon restore", ex2);
+                }
             }
-
-            // Trigger a UI refresh
-            ribbon.PerformLayout();
-            ribbon.Refresh();
+            finally
+            {
+                // Trigger a UI refresh regardless of success/failure.
+                ribbon.PerformLayout();
+                ribbon.Refresh();
+            }
         }
 
         private static List<GH_RibbonTab> GetRibbonTabs(GH_Ribbon ribbon)
         {
             if (ribbon == null) return null;
 
-            // In Grasshopper, Ribbon.Tabs is public property but might return a read-only collection?
-            // Wait, looking at the dump, Tabs is a property. Let's try reflection to get the underlying list
-            // because Ribbon.Tabs is usually List<GH_RibbonTab> or IEnumerable.
-
-            // Actually, GH_Ribbon.Tabs is List<GH_RibbonTab> which is a reference type.
-            // However, modifying it via property getter directly should work if it returns the list.
+            // GH_Ribbon.Tabs is List<GH_RibbonTab>. Try the public property first, then
+            // fall back to the internal field. Failures are logged rather than swallowed.
             try
             {
                 var prop = typeof(GH_Ribbon).GetProperty("Tabs", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -141,16 +160,26 @@ namespace AlligatorGh.Components.UI.PlugInManager
                     return prop.GetValue(ribbon) as List<GH_RibbonTab>;
                 }
 
-                // Fallback to internal field if Property is somehow read-only.
                 var field = typeof(GH_Ribbon).GetField("m_tabs", BindingFlags.Instance | BindingFlags.NonPublic);
                 if (field != null)
                 {
                     return field.GetValue(ribbon) as List<GH_RibbonTab>;
                 }
+
+                LogReflectionFailure("GH_Ribbon.Tabs / m_tabs", null);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogReflectionFailure("GH_Ribbon.Tabs", ex);
+            }
 
             return null;
+        }
+
+        private static void LogReflectionFailure(string member, Exception ex)
+        {
+            string detail = ex == null ? "member not found" : $"{ex.GetType().Name}: {ex.Message}";
+            RhinoApp.WriteLine($"[Alligator] Plugin Manager: could not access '{member}' ({detail}). Ribbon layout may not apply correctly.");
         }
     }
 }

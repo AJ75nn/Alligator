@@ -64,14 +64,25 @@ namespace AlligatorRh.Commands.XlLine
             return Result.Success;
         }
 
+        // The line is extended far beyond the visible frustum so it reads as "infinite"
+        // at any zoom level. The 1000x multiplier on the frustum diagonal achieves this,
+        // but for very large scenes the result can exceed Rhino's reliable coordinate
+        // range (~1e12) and degrade display precision, while a tiny detail view could
+        // under-extend. Clamp to a safe band instead of returning a raw scaled value.
         private double GetFrustumLength(RhinoDoc doc)
         {
+            const double MinLength = 1e3;
+            const double MaxLength = 1e12;
+
             if (doc.Views.ActiveView != null && doc.Views.ActiveView.ActiveViewport != null)
             {
                 var bbox = doc.Views.ActiveView.ActiveViewport.GetFrustumBoundingBox();
                 if (bbox.IsValid)
                 {
-                    return bbox.Diagonal.Length * 1000.0;
+                    double length = bbox.Diagonal.Length * 1000.0;
+                    if (length < MinLength) return MinLength;
+                    if (length > MaxLength) return MaxLength;
+                    return length;
                 }
             }
             return 1e9; // Fallback

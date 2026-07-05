@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Grasshopper;
 
 namespace AlligatorGh.Components.UI.PlugInManager
@@ -35,7 +36,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
                     {
                         settingsList.Add(new PluginTabSettings
                         {
-                            Name = props[0],
+                            Name = Unescape(props[0]),
                             Visible = bool.Parse(props[1]),
                             Order = int.Parse(props[2])
                         });
@@ -45,6 +46,7 @@ namespace AlligatorGh.Components.UI.PlugInManager
             }
             catch
             {
+                // Corrupt store: reset to empty rather than crashing the host.
                 return new List<PluginTabSettings>();
             }
         }
@@ -58,12 +60,52 @@ namespace AlligatorGh.Components.UI.PlugInManager
                 return;
             }
 
-            // Format: Name|Visible|Order;Name|Visible|Order
-            var parts = settings.Select(s => $"{s.Name}|{s.Visible}|{s.Order}");
+            // Format: EscapedName|Visible|Order;EscapedName|Visible|Order
+            // Names are escaped so that '|' or ';' inside a tab name cannot corrupt
+            // the delimiter-based format.
+            var parts = settings.Select(s => $"{Escape(s.Name)}|{s.Visible}|{s.Order}");
             string rawData = string.Join(";", parts);
 
             Instances.Settings.SetValue(SettingsKey, rawData);
             Instances.Settings.WritePersistentSettings();
+        }
+
+        // Escape delimiters and the escape char itself so tab names containing '|',
+        // ';' or '\' round-trip safely through the delimited format.
+        private static string Escape(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            var sb = new StringBuilder(value.Length);
+            foreach (char c in value)
+            {
+                if (c == '\\') sb.Append("\\\\");
+                else if (c == '|') sb.Append("\\p");
+                else if (c == ';') sb.Append("\\s");
+                else sb.Append(c);
+            }
+            return sb.ToString();
+        }
+
+        private static string Unescape(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            var sb = new StringBuilder(value.Length);
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (value[i] == '\\' && i + 1 < value.Length)
+                {
+                    char next = value[i + 1];
+                    if (next == '\\') { sb.Append('\\'); i++; }
+                    else if (next == 'p') { sb.Append('|'); i++; }
+                    else if (next == 's') { sb.Append(';'); i++; }
+                    else { sb.Append(value[i]); }
+                }
+                else
+                {
+                    sb.Append(value[i]);
+                }
+            }
+            return sb.ToString();
         }
     }
 }
